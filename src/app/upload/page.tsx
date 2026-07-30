@@ -54,7 +54,7 @@ export default function UploadPage() {
         formData.append("files", file);
       });
 
-      setState((prev) => ({ ...prev, progress: 30 }));
+      setState((prev) => ({ ...prev, progress: 20 }));
 
       const uploadRes = await fetch("/api/upload", {
         method: "POST",
@@ -66,16 +66,23 @@ export default function UploadPage() {
         throw new Error(error.error || "Upload failed");
       }
 
+      setState((prev) => ({ ...prev, progress: 60 }));
+
       const uploadData = await uploadRes.json();
-      setState((prev) => ({ ...prev, progress: 60, sessionId: uploadData.sessionId }));
 
-      toast.success(`Berhasil upload ${uploadData.totalRows} baris data`);
+      setState((prev) => ({ ...prev, progress: 80 }));
 
-      setState((prev) => ({ ...prev, progress: 100 }));
+      if (uploadData.status === "completed") {
+        toast.success(`Berhasil! ${uploadData.financeRows} baris FINANCE, ${uploadData.marketingRows} baris MARKETING`);
+      } else {
+        toast.success(`Upload ${uploadData.totalRows} baris, ${uploadData.validRows} valid, ${uploadData.errorRows} error`);
+      }
+
+      setState((prev) => ({ ...prev, progress: 100, sessionId: uploadData.sessionId }));
 
       setTimeout(() => {
         router.push(`/results/${uploadData.sessionId}`);
-      }, 1000);
+      }, 1500);
     } catch (error) {
       console.error("Upload error:", error);
       toast.error(error instanceof Error ? error.message : "Upload gagal");

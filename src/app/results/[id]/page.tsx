@@ -44,7 +44,7 @@ export default function ResultsPage() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchDetail();
-    const interval = setInterval(fetchDetail, 3000);
+    const interval = setInterval(fetchDetail, 5000);
     return () => clearInterval(interval);
   }, [fetchDetail]);
 

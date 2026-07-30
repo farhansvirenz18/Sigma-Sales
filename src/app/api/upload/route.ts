@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { parseExcelFile, detectSourceFile } from "@/lib/excel/parser";
-import { inngest } from "@/inngest/client";
-import { SourceFile } from "@/types";
+import { validateAllRows } from "@/lib/excel/validator";
+import {
+  loadTransformContext,
+  applyFinanceTransforms,
+  applyMarketingTransforms,
+} from "@/lib/excel/mapper";
+import { generateFinanceExcel, generateMarketingExcel } from "@/lib/excel/generator";
+import { FinanceRow, MarketingRow, SourceFile } from "@/types";
 
 export const maxDuration = 60;
 
@@ -21,7 +27,7 @@ export async function POST(request: NextRequest) {
     const sessionRes = await supabaseAdmin
       .from("upload_sessions")
       .insert({
-        status: "pending",
+        status: "processing",
         files_uploaded: [],
       })
       .select()
@@ -53,7 +59,6 @@ export async function POST(request: NextRequest) {
       }
 
       const buffer = Buffer.from(await file.arrayBuffer());
-
       const parseResult = parseExcelFile(buffer, source);
 
       if (parseResult.errors.length > 0) {
@@ -100,16 +105,123 @@ export async function POST(request: NextRequest) {
       })
       .eq("id", sessionId);
 
-    await inngest.send({
-      name: "upload.completed",
-      data: { sessionId },
+    await supabaseAdmin.from("processing_logs").insert({
+      session_id: sessionId,
+      step: "validation",
+      status: "started",
+      details: {},
+    });
+
+    const { validCount, errorCount } = await validateAllRows(sessionId);
+
+    await supabaseAdmin.from("processing_logs").insert({
+      session_id: sessionId,
+      step: "validation",
+      status: "completed",
+      details: { valid: validCount, errors: errorCount },
+    });
+
+    await supabaseAdmin
+      .from("upload_sessions")
+      .update({ valid_rows: validCount, error_rows: errorCount })
+      .eq("id", sessionId);
+
+    if (validCount === 0) {
+      await supabaseAdmin
+        .from("upload_sessions")
+        .update({ status: "failed", completed_at: new Date().toISOString() })
+        .eq("id", sessionId);
+
+      return NextResponse.json({
+        sessionId,
+        files: uploadedFiles,
+        totalRows,
+        validRows: 0,
+        errorRows: errorCount,
+        errors: allErrors,
+        status: "failed",
+        message: "No valid rows to process",
+      });
+    }
+
+    await supabaseAdmin.from("processing_logs").insert({
+      session_id: sessionId,
+      step: "transform",
+      status: "started",
+      details: {},
+    });
+
+    const ctx = await loadTransformContext();
+
+    const { data: validRows } = await supabaseAdmin
+      .from("sales_raw")
+      .select("id, raw_data, source_file")
+      .eq("session_id", sessionId)
+      .eq("validation_status", "valid");
+
+    const financeData = applyFinanceTransforms(validRows || [], ctx);
+    const marketingData = applyMarketingTransforms(validRows || [], ctx);
+
+    await supabaseAdmin.from("processing_logs").insert({
+      session_id: sessionId,
+      step: "transform",
+      status: "completed",
+      details: { financeRows: financeData.length, marketingRows: marketingData.length },
+    });
+
+    await supabaseAdmin.from("processing_logs").insert({
+      session_id: sessionId,
+      step: "generate",
+      status: "started",
+      details: {},
+    });
+
+    const financePath = await generateFinanceExcel(
+      financeData as unknown as FinanceRow[],
+      sessionId
+    );
+
+    const marketingPath = await generateMarketingExcel(
+      marketingData as unknown as MarketingRow[],
+      sessionId
+    );
+
+    await supabaseAdmin.from("processing_logs").insert({
+      session_id: sessionId,
+      step: "generate",
+      status: "completed",
+      details: { financePath, marketingPath },
+    });
+
+    await supabaseAdmin
+      .from("upload_sessions")
+      .update({
+        status: "completed",
+        completed_at: new Date().toISOString(),
+      })
+      .eq("id", sessionId);
+
+    await supabaseAdmin.from("processing_logs").insert({
+      session_id: sessionId,
+      step: "complete",
+      status: "completed",
+      details: {
+        validRows: validCount,
+        financeRows: financeData.length,
+        marketingRows: marketingData.length,
+      },
     });
 
     return NextResponse.json({
       sessionId,
       files: uploadedFiles,
       totalRows,
+      validRows: validCount,
+      errorRows: errorCount,
       errors: allErrors,
+      status: "completed",
+      financeRows: financeData.length,
+      marketingRows: marketingData.length,
     });
   } catch (error) {
     console.error("Upload error:", error);
