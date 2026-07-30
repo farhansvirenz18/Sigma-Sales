@@ -9,8 +9,40 @@ import {
 } from "@/lib/excel/mapper";
 import { generateFinanceExcel, generateMarketingExcel } from "@/lib/excel/generator";
 import { FinanceRow, MarketingRow, SourceFile } from "@/types";
+import { createHash } from "crypto";
 
 export const maxDuration = 60;
+
+const MAX_ROWS_PER_FILE = 50000;
+const CHUNK_SIZE = 500;
+
+async function computeFileHash(file: File): Promise<string> {
+  const buffer = Buffer.from(await file.arrayBuffer());
+  return createHash("sha256").update(buffer).digest("hex");
+}
+
+async function checkDuplicate(
+  fileHash: string,
+  fileName: string
+): Promise<{ isDuplicate: boolean; existingSessionId?: string }> {
+  const { data } = await supabaseAdmin
+    .from("upload_sessions")
+    .select("id, files_uploaded")
+    .eq("file_hash", fileHash)
+    .in("status", ["completed", "failed"])
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (data) {
+    const files = data.files_uploaded as { name: string }[];
+    if (files?.some((f) => f.name === fileName)) {
+      return { isDuplicate: true, existingSessionId: data.id };
+    }
+  }
+
+  return { isDuplicate: false };
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,11 +60,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Compute hashes and check for duplicates
+    const fileHashes: string[] = [];
+    for (const file of files) {
+      const hash = await computeFileHash(file);
+      fileHashes.push(hash);
+
+      const dup = await checkDuplicate(hash, file.name);
+      if (dup.isDuplicate) {
+        return NextResponse.json(
+          {
+            error: `File "${file.name}" sudah pernah di-upload sebelumnya (session: ${dup.existingSessionId?.slice(0, 8)}). Gunakan file berbeda atau rename file.`,
+            isDuplicate: true,
+            existingSessionId: dup.existingSessionId,
+          },
+          { status: 409 }
+        );
+      }
+    }
+
+    // Compute combined hash for the batch
+    const combinedHash = createHash("sha256")
+      .update(fileHashes.join("|"))
+      .digest("hex");
+
     const sessionRes = await supabaseAdmin
       .from("upload_sessions")
       .insert({
         status: "processing",
         files_uploaded: [],
+        file_hash: combinedHash,
       })
       .select()
       .single();
@@ -51,7 +108,8 @@ export async function POST(request: NextRequest) {
     const allErrors: { row: number; message: string; file: string }[] = [];
     let totalRows = 0;
 
-    for (const file of files) {
+    for (let fi = 0; fi < files.length; fi++) {
+      const file = files[fi];
       let source = detectSourceFile(file.name);
       if (!source && sourceTypes[file.name]) {
         source = sourceTypes[file.name] as SourceFile;
@@ -74,23 +132,36 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      if (parseResult.rows.length > MAX_ROWS_PER_FILE) {
+        allErrors.push({
+          row: 0,
+          message: `File "${file.name}" memiliki ${parseResult.rows.length} baris (maksimum ${MAX_ROWS_PER_FILE}). File dipotong.`,
+          file: file.name,
+        });
+        parseResult.rows.splice(MAX_ROWS_PER_FILE);
+      }
+
       if (parseResult.rows.length > 0) {
-        const insertData = parseResult.rows.map((row) => ({
-          session_id: sessionId,
-          source_file: source,
-          row_number: row._rowNumber as number,
-          raw_data: row,
-          validation_status: "pending" as const,
-        }));
+        // Chunked insert
+        for (let i = 0; i < parseResult.rows.length; i += CHUNK_SIZE) {
+          const chunk = parseResult.rows.slice(i, i + CHUNK_SIZE);
+          const insertData = chunk.map((row) => ({
+            session_id: sessionId,
+            source_file: source,
+            row_number: row._rowNumber as number,
+            raw_data: row,
+            validation_status: "pending" as const,
+          }));
 
-        const insertResult = await supabaseAdmin
-          .from("sales_raw")
-          .insert(insertData);
+          const insertResult = await supabaseAdmin
+            .from("sales_raw")
+            .insert(insertData);
 
-        if (insertResult.error) {
-          throw new Error(
-            `Failed to insert rows: ${insertResult.error.message}`
-          );
+          if (insertResult.error) {
+            throw new Error(
+              `Failed to insert rows (chunk ${Math.floor(i / CHUNK_SIZE) + 1}): ${insertResult.error.message}`
+            );
+          }
         }
 
         uploadedFiles.push({

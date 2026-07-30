@@ -18,7 +18,34 @@ export const metadata: Metadata = {
   title: "Sigma Sales — Data Processing System",
   description:
     "Sistem otomatis untuk import, validasi, dan transformasi data sales menjadi file Finance & Marketing.",
-  icons: { icon: "/images/icon_sigma.png" },
+  icons: {
+    icon: "/images/icon_sigma.png",
+    shortcut: "/images/icon_sigma.png",
+    apple: "/images/icon_sigma.png",
+  },
+  openGraph: {
+    title: "Sigma Sales — Data Processing System",
+    description:
+      "Sistem otomatis untuk import, validasi, dan transformasi data sales menjadi file Finance & Marketing.",
+    images: [
+      {
+        url: "/images/icon_sigma.png",
+        width: 512,
+        height: 512,
+        alt: "Sigma Sales",
+      },
+    ],
+    type: "website",
+    locale: "id_ID",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Sigma Sales — Data Processing System",
+    description:
+      "Sistem otomatis untuk import, validasi, dan transformasi data sales menjadi file Finance & Marketing.",
+    images: ["/images/icon_sigma.png"],
+  },
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
@@ -31,6 +58,11 @@ export default function RootLayout({
       lang="id"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <meta name="theme-color" content="#2563eb" />
+        <meta name="msapplication-TileImage" content="/images/icon_sigma.png" />
+        <meta name="msapplication-TileColor" content="#2563eb" />
+      </head>
       <body className="min-h-full flex flex-col bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
         <Toaster
           position="top-right"

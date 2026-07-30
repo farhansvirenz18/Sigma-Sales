@@ -1,0 +1,21 @@
+{
+  "name": "Sigma Sales — Data Processing System",
+  "short_name": "Sigma Sales",
+  "description": "Sistem otomatis untuk import, validasi, dan transformasi data sales",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/images/icon_sigma.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/icon_sigma.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -42,7 +42,7 @@ export async function GET(
       .select("id, source_file, row_number, validation_errors")
       .eq("session_id", id)
       .eq("validation_status", "error")
-      .limit(50);
+      .order("row_number", { ascending: true });
 
     return NextResponse.json({
       session,

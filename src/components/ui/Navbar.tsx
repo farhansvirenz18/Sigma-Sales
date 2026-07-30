@@ -45,12 +45,12 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3 group">
-            <div className="relative w-9 h-9 rounded-xl overflow-hidden shadow-md group-hover:shadow-lg transition-shadow">
+            <div className="relative w-11 h-11 rounded-xl overflow-hidden shadow-md group-hover:shadow-lg transition-shadow ring-2 ring-blue-100 group-hover:ring-blue-200">
               <Image
                 src="/images/icon_sigma.png"
                 alt="Sigma Sales"
                 fill
-                className="object-contain"
+                className="object-contain p-0.5"
                 priority
               />
             </div>

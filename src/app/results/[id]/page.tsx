@@ -194,6 +194,27 @@ export default function ResultsPage() {
     }
   };
 
+  const handleDownloadErrors = async (format: "csv" | "json") => {
+    try {
+      const res = await fetch(
+        `/api/sessions/${sessionId}/errors?format=${format}`
+      );
+      if (!res.ok) throw new Error("Download failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `error-report-${sessionId.slice(0, 8)}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success(`Error report downloaded (${format.toUpperCase()})`);
+    } catch {
+      toast.error("Gagal download error report");
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -411,12 +432,40 @@ export default function ResultsPage() {
         <div className="animate-fade-in">
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold text-gray-900">
-                Data dengan Error
-              </h2>
-              <p className="text-sm text-gray-500">
-                {errorRows.length} baris dengan error validasi
-              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Data dengan Error
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    {errorRows.length} baris dengan error validasi
+                  </p>
+                </div>
+                {errorRows.length > 0 && (
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleDownloadErrors("csv")}
+                    >
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      CSV
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleDownloadErrors("json")}
+                    >
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      JSON
+                    </Button>
+                  </div>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {errorRows.length === 0 ? (
