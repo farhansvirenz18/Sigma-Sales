@@ -17,7 +17,7 @@ Sistem otomatis untuk import dan transformasi data sales dari 3 file Excel menja
 - Upsert / re-upload file yang sama dengan konfirmasi
 - Streaming reader untuk file besar (>10MB)
 - Validasi data otomatis berbasis database rules
-- Transformasi data fleksibel via column mapping
+- Transformasi data fleksibel via mapping rule DB
 - Bundle splitting (BOXL → item terpisah)
 - Auto region resolution dari alamat pengiriman
 - Generate 2 file output (FINANCE 16 kolom & MARKETING 20 kolom)
