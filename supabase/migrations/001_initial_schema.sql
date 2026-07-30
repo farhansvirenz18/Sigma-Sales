@@ -72,7 +72,7 @@ CREATE TABLE column_mappings (
     is_required BOOLEAN DEFAULT TRUE,
     default_value TEXT,
     created_at TIMESTAMPTZ DEFAULT now(),
-    UNIQUE(source_file, source_column, target_table)
+    UNIQUE(source_file, source_column, target_table, target_column)
 );
 
 -- 6. OUTPUT_FILES: File output yang di-generate

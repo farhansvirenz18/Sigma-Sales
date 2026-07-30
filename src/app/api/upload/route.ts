@@ -4,6 +4,8 @@ import { parseExcelFile, detectSourceFile } from "@/lib/excel/parser";
 import { inngest } from "@/inngest/client";
 import { SourceFile } from "@/types";
 
+export const maxDuration = 60;
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
