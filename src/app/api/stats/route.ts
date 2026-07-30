@@ -47,6 +47,7 @@ export async function GET() {
     const completedSessions = completedRes.count || 0;
     const failedSessions = failedRes.count || 0;
     const rolledBackSessions = rolledBackRes.count || 0;
+    const pendingSessions = totalSessions - completedSessions - failedSessions - rolledBackSessions;
     const successRate =
       totalSessions > 0
         ? Math.round((completedSessions / totalSessions) * 100)
@@ -83,9 +84,16 @@ export async function GET() {
       completedSessions,
       failedSessions,
       rolledBackSessions,
+      pendingSessions,
       recentSessions: recentRes.data || [],
       monthlyProcessing: monthlyData,
       platformBreakdown: platformCounts,
+      statusBreakdown: [
+        { name: "Selesai", value: completedSessions, color: "#10b981" },
+        { name: "Gagal", value: failedSessions, color: "#ef4444" },
+        { name: "Dibatalkan", value: rolledBackSessions, color: "#8b5cf6" },
+        { name: "Menunggu", value: pendingSessions > 0 ? pendingSessions : 0, color: "#f59e0b" },
+      ],
       revenue: {
         totalOmzet,
         totalHPP: 0,
@@ -113,13 +121,13 @@ async function calculateMonthlyStats() {
     .gte("created_at", sixMonthsAgo.toISOString())
     .order("created_at");
 
-  const monthCounts: Record<string, { total: number; success: number }> = {};
+  const monthCounts: Record<string, { total: number; success: number; error: number }> = {};
 
   for (let i = 5; i >= 0; i--) {
     const date = new Date();
     date.setMonth(date.getMonth() - i);
     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-    monthCounts[key] = { total: 0, success: 0 };
+    monthCounts[key] = { total: 0, success: 0, error: 0 };
   }
 
   for (const session of data || []) {
@@ -129,6 +137,8 @@ async function calculateMonthlyStats() {
       monthCounts[key].total++;
       if (session.status === "completed") {
         monthCounts[key].success++;
+      } else if (session.status === "failed") {
+        monthCounts[key].error++;
       }
     }
   }
