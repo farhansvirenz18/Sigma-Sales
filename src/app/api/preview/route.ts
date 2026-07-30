@@ -39,9 +39,17 @@ export async function POST(request: NextRequest) {
 
     for (const fileInfo of body.files) {
       const buffer = Buffer.from(fileInfo.data, "base64");
-      const source = detectSourceFile(fileInfo.name);
 
-      if (!source) continue;
+      // Detect source type from filename
+      let source = detectSourceFile(fileInfo.name);
+      if (!source) {
+        // Use first mapping's source_file if available
+        if (body.mappings && body.mappings.length > 0) {
+          source = body.mappings[0].source_file;
+        } else {
+          source = fileInfo.name.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9]/g, "_").toUpperCase();
+        }
+      }
 
       const parseResult = parseExcelFile(buffer, source);
       const previewRows = parseResult.rows.slice(0, 10);
@@ -57,7 +65,7 @@ export async function POST(request: NextRequest) {
           )
           .map((m) => ({
             id: 0,
-            source_file: m.source_file as ColumnMapping["source_file"],
+            source_file: m.source_file,
             source_column: m.source_column,
             target_table: "finance" as const,
             target_column: m.target_column,
@@ -73,7 +81,7 @@ export async function POST(request: NextRequest) {
           )
           .map((m) => ({
             id: 0,
-            source_file: m.source_file as ColumnMapping["source_file"],
+            source_file: m.source_file,
             source_column: m.source_column,
             target_table: "marketing" as const,
             target_column: m.target_column,
@@ -117,7 +125,7 @@ export async function POST(request: NextRequest) {
 
       previewResults[fileInfo.name] = {
         source,
-        columns: Object.keys(previewRows[0] || {}),
+        columns: Object.keys(previewRows[0] || {}).filter((k) => !k.startsWith("_")),
         rawRows: previewRows,
         financeRows,
         marketingRows,

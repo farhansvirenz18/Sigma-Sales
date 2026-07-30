@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Card, { CardHeader, CardContent } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 
@@ -69,40 +69,239 @@ const MARKETING_COLUMNS = [
   "SKU",
 ];
 
-function getTransformType(
+const TRANSFORM_OPTIONS = [
+  { value: "direct", label: "Direct (Langsung)" },
+  { value: "date_format", label: "Date (Tanggal)" },
+  { value: "number", label: "Number (Angka)" },
+  { value: "lookup", label: "Lookup (Cari di DB)" },
+  { value: "lookup_hpp", label: "HPP Lookup" },
+  { value: "map", label: "Map (Mapping nilai)" },
+  { value: "region_map", label: "Region Map" },
+  { value: "concat", label: "Concat (Gabung)" },
+  { value: "formula", label: "Formula (Rumus)" },
+];
+
+function normalizeForMatch(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "")
+    .replace(/_/g, "")
+    .replace(/\s+/g, "");
+}
+
+function similarity(a: string, b: string): number {
+  const na = normalizeForMatch(a);
+  const nb = normalizeForMatch(b);
+
+  if (na === nb) return 100;
+  if (na.includes(nb) || nb.includes(na)) return 80;
+
+  // Simple word overlap
+  const wordsA = a.toLowerCase().split(/[\s_\-\/]+/).filter(Boolean);
+  const wordsB = b.toLowerCase().split(/[\s_\-\/]+/).filter(Boolean);
+  let matches = 0;
+  for (const wa of wordsA) {
+    for (const wb of wordsB) {
+      if (wa === wb || wa.includes(wb) || wb.includes(wa)) {
+        matches++;
+        break;
+      }
+    }
+  }
+  if (matches > 0) {
+    return Math.round((matches / Math.max(wordsA.length, wordsB.length)) * 70);
+  }
+
+  return 0;
+}
+
+function suggestTransform(sourceCol: string, targetCol: string): string {
+  const sc = sourceCol.toLowerCase();
+  const tc = targetCol.toLowerCase();
+
+  if (tc.includes("tanggal") || tc.includes("date") || tc.includes("closing") || tc.includes("pesanan")) {
+    return "date_format";
+  }
+  if (tc.includes("jumlah") || tc.includes("qty") || tc.includes("quantity") || tc.includes("omzet") || tc.includes("harga") || tc.includes("hpp") || tc.includes("total")) {
+    return "number";
+  }
+  if (tc.includes("produk") || tc.includes("product") || tc.includes("nama") || tc.includes("sku")) {
+    if (sc.includes("productcode") || sc.includes("sku") || sc.includes("kode")) {
+      return "lookup";
+    }
+    return "direct";
+  }
+  if (tc.includes("hpp")) return "lookup_hpp";
+  if (tc.includes("region")) return "region_map";
+  if (tc.includes("platform") || tc.includes("payment") || tc.includes("metode")) return "map";
+
+  return "direct";
+}
+
+function suggestTarget(
   sourceCol: string,
-  targetCol: string
-): Record<string, unknown> {
-  const dateCols = ["Date", "Tanggal Closing", "Tanggal Pesanan"];
-  const numberCols = ["Quantity", "UnitPrice", "Totalperline", "Jumlah", "Omzet"];
-  const lookupCols = ["ProductCode"];
-  const mapCols: Record<string, Record<string, string>> = {
-    MetodeBayar: { TF: "Transfer", COD: "COD" },
-    Kanal: { A: "WEB", SHOPEE: "SHOPEE", "Tiktok Shop": "TIKTOK SHOP" },
+  allTargets: string[]
+): { target: string; score: number } {
+  let best = "";
+  let bestScore = 0;
+
+  for (const target of allTargets) {
+    const score = similarity(sourceCol, target);
+    if (score > bestScore) {
+      bestScore = score;
+      best = target;
+    }
+  }
+
+  return { target: best, score: bestScore };
+}
+
+interface MappingRowProps {
+  sourceCol: string;
+  sampleValue: string;
+  financeTarget: string;
+  financeTransform: string;
+  marketingTarget: string;
+  marketingTransform: string;
+  onFinanceChange: (target: string, transform: string) => void;
+  onMarketingChange: (target: string, transform: string) => void;
+  allTargets: string[];
+}
+
+function MappingRow({
+  sourceCol,
+  sampleValue,
+  financeTarget,
+  financeTransform,
+  marketingTarget,
+  marketingTransform,
+  onFinanceChange,
+  onMarketingChange,
+  allTargets,
+}: MappingRowProps) {
+  const [financeSearch, setFinanceSearch] = useState(financeTarget);
+  const [marketingSearch, setMarketingSearch] = useState(marketingTarget);
+  const [showFinanceDropdown, setShowFinanceDropdown] = useState(false);
+  const [showMarketingDropdown, setShowMarketingDropdown] = useState(false);
+
+  const filterTargets = (search: string) => {
+    if (!search) return allTargets;
+    const lower = search.toLowerCase();
+    return allTargets.filter((t) => t.toLowerCase().includes(lower));
   };
 
-  if (dateCols.includes(targetCol) || dateCols.includes(sourceCol)) {
-    return { type: "date_format" };
-  }
-  if (numberCols.includes(sourceCol) || numberCols.includes(targetCol)) {
-    return { type: "number" };
-  }
-  if (lookupCols.includes(sourceCol)) {
-    if (targetCol === "Produk Name" || targetCol === "Produk") {
-      return { type: "lookup", table: "products", field: "name" };
-    }
-    return { type: "direct" };
-  }
-  if (targetCol === "HPP Sigma" || targetCol === "HPP") {
-    return { type: "lookup_hpp" };
-  }
-  if (targetCol === "Region") {
-    return { type: "region_map" };
-  }
-  if (mapCols[sourceCol]) {
-    return { type: "map", mapping: mapCols[sourceCol] };
-  }
-  return { type: "direct" };
+  return (
+    <tr className="border-b border-gray-100 table-row-hover">
+      <td className="py-2 px-3">
+        <div className="font-mono text-xs bg-gray-100 px-2 py-1 rounded inline-block">
+          {sourceCol}
+        </div>
+        {sampleValue && (
+          <div className="text-[10px] text-gray-400 mt-0.5 max-w-[120px] truncate">
+            ex: {sampleValue}
+          </div>
+        )}
+      </td>
+
+      {/* Finance Target */}
+      <td className="py-2 px-2">
+        <div className="flex flex-col space-y-1">
+          <div className="relative">
+            <input
+              type="text"
+              value={financeSearch}
+              onChange={(e) => {
+                setFinanceSearch(e.target.value);
+                setShowFinanceDropdown(true);
+                onFinanceChange(e.target.value, financeTransform);
+              }}
+              onFocus={() => setShowFinanceDropdown(true)}
+              onBlur={() => setTimeout(() => setShowFinanceDropdown(false), 200)}
+              placeholder="Ketik atau pilih..."
+              className="w-full px-2 py-1 border border-gray-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"
+            />
+            {showFinanceDropdown && (
+              <div className="absolute z-10 top-full left-0 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                {filterTargets(financeSearch).map((t) => (
+                  <button
+                    key={t}
+                    onMouseDown={() => {
+                      onFinanceChange(t, suggestTransform(sourceCol, t));
+                      setFinanceSearch(t);
+                      setShowFinanceDropdown(false);
+                    }}
+                    className="w-full text-left px-2 py-1 text-xs hover:bg-blue-50 truncate"
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <select
+            value={financeTransform}
+            onChange={(e) => onFinanceChange(financeTarget, e.target.value)}
+            className="w-full px-1 py-0.5 border border-gray-200 rounded text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-400 bg-gray-50"
+          >
+            {TRANSFORM_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </td>
+
+      {/* Marketing Target */}
+      <td className="py-2 px-2">
+        <div className="flex flex-col space-y-1">
+          <div className="relative">
+            <input
+              type="text"
+              value={marketingSearch}
+              onChange={(e) => {
+                setMarketingSearch(e.target.value);
+                setShowMarketingDropdown(true);
+                onMarketingChange(e.target.value, marketingTransform);
+              }}
+              onFocus={() => setShowMarketingDropdown(true)}
+              onBlur={() => setTimeout(() => setShowMarketingDropdown(false), 200)}
+              placeholder="Ketik atau pilih..."
+              className="w-full px-2 py-1 border border-gray-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-purple-400"
+            />
+            {showMarketingDropdown && (
+              <div className="absolute z-10 top-full left-0 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                {filterTargets(marketingSearch).map((t) => (
+                  <button
+                    key={t}
+                    onMouseDown={() => {
+                      onMarketingChange(t, suggestTransform(sourceCol, t));
+                      setMarketingSearch(t);
+                      setShowMarketingDropdown(false);
+                    }}
+                    className="w-full text-left px-2 py-1 text-xs hover:bg-purple-50 truncate"
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <select
+            value={marketingTransform}
+            onChange={(e) => onMarketingChange(marketingTarget, e.target.value)}
+            className="w-full px-1 py-0.5 border border-gray-200 rounded text-[10px] focus:outline-none focus:ring-1 focus:ring-purple-400 bg-gray-50"
+          >
+            {TRANSFORM_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </td>
+    </tr>
+  );
 }
 
 export default function ColumnMapper({
@@ -111,31 +310,59 @@ export default function ColumnMapper({
   onSkip,
   loading = false,
 }: ColumnMapperProps) {
-  const [mappings, setMappings] = useState<Record<string, Record<string, string>>>({});
+  const [mappings, setMappings] = useState<
+    Record<string, { finance: string; fTransform: string; marketing: string; mTransform: string }>
+  >({});
 
   const getFileSource = (fileName: string): string => {
     const lower = fileName.toLowerCase();
     if (lower.includes("daily")) return "SALES_DAILY";
     if (lower.includes("mp")) return "SALES_MP";
-    if (lower.includes("produk") || lower.includes("product"))
-      return "SALES_PRODUK";
-    return "SALES_DAILY";
+    if (lower.includes("produk") || lower.includes("product")) return "SALES_PRODUK";
+    return fileName.replace(/\.[^.]+$/, "").toUpperCase().replace(/[^A-Z0-9]/g, "_");
   };
+
+  const allTargets = useMemo(() => {
+    const set = new Set([...FINANCE_COLUMNS, ...MARKETING_COLUMNS]);
+    return Array.from(set).sort();
+  }, []);
 
   const handleMappingChange = (
     sourceFile: string,
     sourceCol: string,
-    targetCol: string
+    field: "finance" | "marketing",
+    value: string,
+    transform: string
   ) => {
     setMappings((prev) => {
-      const fileMappings = { ...(prev[sourceFile] || {}) };
-      if (targetCol === "") {
-        delete fileMappings[sourceCol];
-      } else {
-        fileMappings[sourceCol] = targetCol;
-      }
-      return { ...prev, [sourceFile]: fileMappings };
+      const key = `${sourceFile}|${sourceCol}`;
+      const existing = prev[key] || { finance: "", fTransform: "direct", marketing: "", mTransform: "direct" };
+      return {
+        ...prev,
+        [key]: {
+          ...existing,
+          [field === "finance" ? "finance" : "marketing"]: value,
+          [field === "finance" ? "fTransform" : "mTransform"]: transform,
+        },
+      };
     });
+  };
+
+  const handleAutoMap = (sourceFile: string, columns: string[]) => {
+    const newMappings = { ...mappings };
+    for (const col of columns) {
+      const key = `${sourceFile}|${col}`;
+      const finSuggest = suggestTarget(col, FINANCE_COLUMNS);
+      const mktSuggest = suggestTarget(col, MARKETING_COLUMNS);
+
+      newMappings[key] = {
+        finance: finSuggest.score >= 40 ? finSuggest.target : "",
+        fTransform: finSuggest.score >= 40 ? suggestTransform(col, finSuggest.target) : "direct",
+        marketing: mktSuggest.score >= 40 ? mktSuggest.target : "",
+        mTransform: mktSuggest.score >= 40 ? suggestTransform(col, mktSuggest.target) : "direct",
+      };
+    }
+    setMappings(newMappings);
   };
 
   const handleSave = () => {
@@ -143,30 +370,28 @@ export default function ColumnMapper({
 
     for (const file of files) {
       const source = getFileSource(file.name);
-      const fileMappings = mappings[source] || {};
 
-      for (const [sourceCol, targetCol] of Object.entries(fileMappings)) {
-        if (targetCol === "finance" || targetCol === "marketing") continue;
+      for (const col of file.columns) {
+        const key = `${source}|${col}`;
+        const m = mappings[key];
+        if (!m) continue;
 
-        const isFinance = FINANCE_COLUMNS.includes(targetCol);
-        const isMarketing = MARKETING_COLUMNS.includes(targetCol);
-
-        if (isFinance) {
+        if (m.finance) {
           allMappings.push({
             source_file: source,
-            source_column: sourceCol,
+            source_column: col,
             target_table: "finance",
-            target_column: targetCol,
-            transform_rule: getTransformType(sourceCol, targetCol),
+            target_column: m.finance,
+            transform_rule: { type: m.fTransform },
           });
         }
-        if (isMarketing) {
+        if (m.marketing) {
           allMappings.push({
             source_file: source,
-            source_column: sourceCol,
+            source_column: col,
             target_table: "marketing",
-            target_column: targetCol,
-            transform_rule: getTransformType(sourceCol, targetCol),
+            target_column: m.marketing,
+            transform_rule: { type: m.mTransform },
           });
         }
       }
@@ -179,11 +404,9 @@ export default function ColumnMapper({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">
-            Mapping Kolom
-          </h2>
+          <h2 className="text-lg font-semibold text-gray-900">Mapping Kolom</h2>
           <p className="text-sm text-gray-600">
-            Pilih kolom input yang ingin di-mapping ke kolom output
+            Map kolom input ke kolom output. Ketik nama kolom atau pilih dari dropdown.
           </p>
         </div>
         <div className="flex space-x-2">
@@ -205,110 +428,74 @@ export default function ColumnMapper({
                 <div>
                   <h3 className="font-medium text-gray-900">{file.name}</h3>
                   <p className="text-xs text-gray-500">
-                    Source: {source} | {file.rowCount} baris |{" "}
-                    {file.columns.length} kolom
+                    Source: {source} | {file.rowCount} baris | {file.columns.length} kolom
                   </p>
                 </div>
-                <span
-                  className={`px-2 py-1 text-xs font-medium rounded ${
-                    file.source
-                      ? "bg-green-100 text-green-700"
-                      : "bg-yellow-100 text-yellow-700"
-                  }`}
-                >
-                  {file.source ? "Auto-detected" : "Manual Mapping"}
-                </span>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => handleAutoMap(source, file.columns)}
+                    className="text-xs text-blue-600 hover:text-blue-700 font-medium px-3 py-1 rounded-lg hover:bg-blue-50 transition-colors"
+                  >
+                    Auto-Map
+                  </button>
+                  <span
+                    className={`px-2 py-1 text-xs font-medium rounded ${
+                      file.source
+                        ? "bg-green-100 text-green-700"
+                        : "bg-yellow-100 text-yellow-700"
+                    }`}
+                  >
+                    {file.source ? "Auto-detected" : "Manual"}
+                  </span>
+                </div>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-2 px-3 font-medium text-gray-600">
+                    <tr className="border-b border-gray-200 bg-gray-50/50">
+                      <th className="text-left py-2 px-3 font-medium text-gray-600 text-xs">
                         Kolom Input
                       </th>
-                      <th className="text-left py-2 px-3 font-medium text-gray-600 w-12">
-                        →
+                      <th className="text-left py-2 px-2 font-medium text-blue-600 text-xs">
+                        → Finance Output + Transform
                       </th>
-                      <th className="text-left py-2 px-3 font-medium text-gray-600">
-                        Kolom Output (Finance)
-                      </th>
-                      <th className="text-left py-2 px-3 font-medium text-gray-600">
-                        Kolom Output (Marketing)
-                      </th>
-                      <th className="text-left py-2 px-3 font-medium text-gray-600">
-                        Sample Data
+                      <th className="text-left py-2 px-2 font-medium text-purple-600 text-xs">
+                        → Marketing Output + Transform
                       </th>
                     </tr>
                   </thead>
                   <tbody>
                     {file.columns.map((col) => {
-                      const currentMapping = mappings[source] || {};
-                      const mappedTo = currentMapping[col] || "";
+                      const key = `${source}|${col}`;
+                      const m = mappings[key] || {
+                        finance: "",
+                        fTransform: "direct",
+                        marketing: "",
+                        mTransform: "direct",
+                      };
+                      const sampleVal = file.sampleData[0]
+                        ? String(file.sampleData[0][col] ?? "").slice(0, 25)
+                        : "";
 
                       return (
-                        <tr
+                        <MappingRow
                           key={col}
-                          className="border-b border-gray-100 hover:bg-gray-50"
-                        >
-                          <td className="py-2 px-3">
-                            <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
-                              {col}
-                            </span>
-                          </td>
-                          <td className="py-2 px-3 text-gray-400">→</td>
-                          <td className="py-2 px-3">
-                            <select
-                              value={
-                                FINANCE_COLUMNS.includes(mappedTo)
-                                  ? mappedTo
-                                  : ""
-                              }
-                              onChange={(e) =>
-                                handleMappingChange(source, col, e.target.value)
-                              }
-                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                              <option value="">-- Tidak di-map --</option>
-                              {FINANCE_COLUMNS.map((fc) => (
-                                <option key={fc} value={fc}>
-                                  {fc}
-                                </option>
-                              ))}
-                            </select>
-                          </td>
-                          <td className="py-2 px-3">
-                            <select
-                              value={
-                                MARKETING_COLUMNS.includes(mappedTo)
-                                  ? mappedTo
-                                  : ""
-                              }
-                              onChange={(e) =>
-                                handleMappingChange(source, col, e.target.value)
-                              }
-                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                              <option value="">-- Tidak di-map --</option>
-                              {MARKETING_COLUMNS.map((mc) => (
-                                <option key={mc} value={mc}>
-                                  {mc}
-                                </option>
-                              ))}
-                            </select>
-                          </td>
-                          <td className="py-2 px-3">
-                            <span className="text-xs text-gray-500">
-                              {file.sampleData[0]
-                                ? String(file.sampleData[0][col] || "-").slice(
-                                    0,
-                                    20
-                                  )
-                                : "-"}
-                            </span>
-                          </td>
-                        </tr>
+                          sourceCol={col}
+                          sampleValue={sampleVal}
+                          financeTarget={m.finance}
+                          financeTransform={m.fTransform}
+                          marketingTarget={m.marketing}
+                          marketingTransform={m.mTransform}
+                          onFinanceChange={(target, transform) =>
+                            handleMappingChange(source, col, "finance", target, transform)
+                          }
+                          onMarketingChange={(target, transform) =>
+                            handleMappingChange(source, col, "marketing", target, transform)
+                          }
+                          allTargets={allTargets}
+                        />
                       );
                     })}
                   </tbody>

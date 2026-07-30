@@ -8,7 +8,7 @@ export type SessionStatus =
 
 export type ValidationStatus = "pending" | "valid" | "error";
 
-export type SourceFile = "SALES_DAILY" | "SALES_MP" | "SALES_PRODUK";
+export type SourceFile = string;
 
 export type OutputFileType = "FINANCE" | "MARKETING";
 
@@ -19,6 +19,17 @@ export type RuleType =
   | "lookup"
   | "range"
   | "unique";
+
+export type TransformType =
+  | "direct"
+  | "date_format"
+  | "number"
+  | "lookup"
+  | "lookup_hpp"
+  | "map"
+  | "region_map"
+  | "concat"
+  | "formula";
 
 export interface UploadSession {
   id: string;
@@ -95,16 +106,7 @@ export interface ColumnMapping {
 }
 
 export interface TransformRule {
-  type:
-    | "direct"
-    | "date_format"
-    | "number"
-    | "lookup"
-    | "lookup_hpp"
-    | "map"
-    | "region_map"
-    | "concat"
-    | "formula";
+  type: TransformType;
   input?: string;
   output?: string;
   table?: string;

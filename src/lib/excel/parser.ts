@@ -59,14 +59,7 @@ function normalizeRow(
     normalized[cleanKey] = value;
   }
 
-  if (source === "SALES_DAILY") {
-    normalized._source = "SALES_DAILY";
-  } else if (source === "SALES_MP") {
-    normalized._source = "SALES_MP";
-  } else if (source === "SALES_PRODUK") {
-    normalized._source = "SALES_PRODUK";
-  }
-
+  normalized._source = source;
   normalized._rowNumber = rowNumber;
 
   return normalized;

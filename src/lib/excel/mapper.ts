@@ -123,7 +123,7 @@ export function applyTransform(
       return sourceValue;
 
     case "region_map":
-      return mapRegion(String(data.ProvinsiCustomer || ""), ctx);
+      return mapRegion(String(data[rule.input || "ProvinsiCustomer"] || ""), ctx);
 
     case "concat":
       if (rule.fields && rule.separator) {
@@ -146,7 +146,6 @@ export function resolvePlatform(data: Record<string, unknown>, ctx?: TransformCo
   const platform = String(data.Platform || "");
   const combined = `${kanal} ${platform}`.toUpperCase();
 
-  // Use DB config if available
   if (ctx && ctx.platformConfig.length > 0) {
     for (const config of ctx.platformConfig) {
       if (combined.includes(config.source_pattern.toUpperCase())) {
@@ -155,14 +154,12 @@ export function resolvePlatform(data: Record<string, unknown>, ctx?: TransformCo
     }
   }
 
-  // Fallback to defaults
   if (combined.includes("SHOPEE")) return "SHOPEE";
   if (combined.includes("TIKTOK")) return "TIKTOK SHOP";
   return "WEB";
 }
 
 function mapRegion(provinsi: string, ctx?: TransformContext): string {
-  // Use DB config if available
   if (ctx && ctx.regionConfig.length > 0) {
     for (const config of ctx.regionConfig) {
       if (provinsi.includes(config.province_pattern.replace(/%/g, ""))) {
@@ -171,7 +168,6 @@ function mapRegion(provinsi: string, ctx?: TransformContext): string {
     }
   }
 
-  // Fallback to defaults
   const fallback: Record<string, string> = {
     "Jawa Timur": "JAWA",
     "Jawa Barat": "JAWA",
@@ -204,10 +200,6 @@ function evaluateFormula(expression: string, data: Record<string, unknown>): num
   }
 }
 
-/**
- * Check if a product code is a bundle and return its child items.
- * If not a bundle, returns a single-item array with the original code.
- */
 export function resolveProduct(
   productCode: string,
   ctx: TransformContext
@@ -222,9 +214,6 @@ export function resolveProduct(
   return [{ code: productCode, quantity: 1 }];
 }
 
-/**
- * Get HPP for a product, handling bundles by summing child HPPs.
- */
 export function resolveHPP(
   productCode: string,
   platform: string,
@@ -253,38 +242,31 @@ export function applyFinanceTransforms(
   const result: Record<string, unknown>[] = [];
 
   for (const row of rawRows) {
-    const productCode = String(row.raw_data.ProductCode || "");
-    const platform = resolvePlatform(row.raw_data, ctx);
-    const resolvedProducts = resolveProduct(productCode, ctx);
+    const financeRow: Record<string, unknown> = {};
 
-    for (const prod of resolvedProducts) {
-      const financeRow: Record<string, unknown> = {};
+    const financeMappings = ctx.mappings.filter(
+      (m) => m.target_table === "finance" && m.source_file === row.source_file
+    );
 
-      const financeMappings = ctx.mappings.filter(
-        (m) => m.target_table === "finance" && m.source_file === row.source_file
-      );
-
-      for (const mapping of financeMappings) {
-        if (mapping.target_column === "Produk Name") {
-          const productRecord = ctx.products.get(prod.code);
-          financeRow["Produk Name"] = productRecord?.name || prod.code;
-        } else if (mapping.target_column === "Jumlah") {
-          financeRow["Jumlah"] = toNumber(row.raw_data.Quantity) * prod.quantity;
-        } else if (mapping.target_column === "HPP Sigma") {
-          financeRow["HPP Sigma"] = resolveHPP(prod.code, platform, ctx);
-        } else {
-          financeRow[mapping.target_column] = applyTransform(row.raw_data, mapping, ctx);
-        }
-      }
-
-      // Ensure HPP and Total Bayar are set
-      if (!financeRow["HPP Sigma"]) {
-        financeRow["HPP Sigma"] = resolveHPP(prod.code, platform, ctx);
-      }
-      financeRow["Total Bayar"] = toNumber(row.raw_data.Totalperline);
-
-      result.push(financeRow);
+    for (const mapping of financeMappings) {
+      financeRow[mapping.target_column] = applyTransform(row.raw_data, mapping, ctx);
     }
+
+    // Auto-compute HPP if not mapped
+    if (!financeRow["HPP Sigma"]) {
+      const productCode = String(row.raw_data.ProductCode || row.raw_data.SKU || row.raw_data.product_code || "");
+      const platform = resolvePlatform(row.raw_data, ctx);
+      financeRow["HPP Sigma"] = resolveHPP(productCode, platform, ctx);
+    }
+
+    // Auto-compute Total Bayar if not mapped
+    if (!financeRow["Total Bayar"]) {
+      financeRow["Total Bayar"] = toNumber(
+        row.raw_data.Totalperline || row.raw_data.Subtotal || row.raw_data.total || 0
+      );
+    }
+
+    result.push(financeRow);
   }
 
   return result;
@@ -297,44 +279,39 @@ export function applyMarketingTransforms(
   const result: Record<string, unknown>[] = [];
 
   for (const row of rawRows) {
-    const productCode = String(row.raw_data.ProductCode || "");
-    const platform = resolvePlatform(row.raw_data, ctx);
-    const resolvedProducts = resolveProduct(productCode, ctx);
+    const marketingRow: Record<string, unknown> = {};
 
-    for (const prod of resolvedProducts) {
-      const marketingRow: Record<string, unknown> = {};
+    const marketingMappings = ctx.mappings.filter(
+      (m) => m.target_table === "marketing" && m.source_file === row.source_file
+    );
 
-      const marketingMappings = ctx.mappings.filter(
-        (m) => m.target_table === "marketing" && m.source_file === row.source_file
-      );
-
-      for (const mapping of marketingMappings) {
-        if (mapping.target_column === "Produk") {
-          const productRecord = ctx.products.get(prod.code);
-          marketingRow["Produk"] = productRecord?.name || prod.code;
-        } else if (mapping.target_column === "Jumlah") {
-          marketingRow["Jumlah"] = toNumber(row.raw_data.Quantity) * prod.quantity;
-        } else if (mapping.target_column === "HPP") {
-          marketingRow["HPP"] = resolveHPP(prod.code, platform, ctx);
-        } else {
-          marketingRow[mapping.target_column] = applyTransform(row.raw_data, mapping, ctx);
-        }
-      }
-
-      // Compute Tahun/Bulan from Date
-      const dateStr = parseDate(String(row.raw_data.Date || ""));
-      const date = new Date(dateStr);
-      marketingRow["Tahun"] = date.getFullYear();
-      marketingRow["Bulan"] = getMonthName(date.getMonth());
-
-      // Ensure HPP and SKU are set
-      if (!marketingRow["HPP"]) {
-        marketingRow["HPP"] = resolveHPP(prod.code, platform, ctx);
-      }
-      marketingRow["SKU"] = prod.code;
-
-      result.push(marketingRow);
+    for (const mapping of marketingMappings) {
+      marketingRow[mapping.target_column] = applyTransform(row.raw_data, mapping, ctx);
     }
+
+    // Auto-compute Tahun/Bulan if not mapped
+    if (!marketingRow["Tahun"] || !marketingRow["Bulan"]) {
+      const dateStr = parseDate(
+        String(row.raw_data.Date || row.raw_data.Tanggal || row.raw_data["Tanggal Transaksi"] || "")
+      );
+      const date = new Date(dateStr);
+      if (!marketingRow["Tahun"]) marketingRow["Tahun"] = date.getFullYear();
+      if (!marketingRow["Bulan"]) marketingRow["Bulan"] = getMonthName(date.getMonth());
+    }
+
+    // Auto-compute HPP if not mapped
+    if (!marketingRow["HPP"]) {
+      const productCode = String(row.raw_data.ProductCode || row.raw_data.SKU || row.raw_data.product_code || "");
+      const platform = resolvePlatform(row.raw_data, ctx);
+      marketingRow["HPP"] = resolveHPP(productCode, platform, ctx);
+    }
+
+    // Auto-compute SKU if not mapped
+    if (!marketingRow["SKU"]) {
+      marketingRow["SKU"] = String(row.raw_data.ProductCode || row.raw_data.SKU || row.raw_data.product_code || "");
+    }
+
+    result.push(marketingRow);
   }
 
   return result;

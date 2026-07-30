@@ -110,18 +110,7 @@ export async function POST(request: NextRequest) {
 
     for (let fi = 0; fi < files.length; fi++) {
       const file = files[fi];
-      let source = detectSourceFile(file.name);
-      if (!source && sourceTypes[file.name]) {
-        source = sourceTypes[file.name] as SourceFile;
-      }
-      if (!source) {
-        allErrors.push({
-          row: 0,
-          message: `Cannot detect source file type: ${file.name}. Provide sourceTypes mapping.`,
-          file: file.name,
-        });
-        continue;
-      }
+      let source: SourceFile = detectSourceFile(file.name) || sourceTypes[file.name] || file.name.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9]/g, "_").toUpperCase();
 
       const buffer = Buffer.from(await file.arrayBuffer());
       const parseResult = parseExcelFile(buffer, source);
