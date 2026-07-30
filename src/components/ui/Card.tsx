@@ -8,7 +8,7 @@ interface CardProps {
 export default function Card({ children, className = "" }: CardProps) {
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm border border-gray-200 ${className}`}
+      className={`bg-white rounded-2xl shadow-sm border border-gray-100/80 ring-1 ring-gray-900/[0.03] ${className}`}
     >
       {children}
     </div>
@@ -23,7 +23,7 @@ export function CardHeader({
   className?: string;
 }) {
   return (
-    <div className={`px-6 py-4 border-b border-gray-200 ${className}`}>
+    <div className={`px-5 sm:px-6 py-4 border-b border-gray-100 ${className}`}>
       {children}
     </div>
   );
@@ -36,7 +36,7 @@ export function CardContent({
   children: ReactNode;
   className?: string;
 }) {
-  return <div className={`px-6 py-4 ${className}`}>{children}</div>;
+  return <div className={`px-5 sm:px-6 py-4 ${className}`}>{children}</div>;
 }
 
 export function CardFooter({
@@ -47,7 +47,7 @@ export function CardFooter({
   className?: string;
 }) {
   return (
-    <div className={`px-6 py-4 border-t border-gray-200 ${className}`}>
+    <div className={`px-5 sm:px-6 py-4 border-t border-gray-100 ${className}`}>
       {children}
     </div>
   );

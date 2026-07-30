@@ -11,11 +11,6 @@ const MAX_ROWS_PER_FILE = 50000;
 const CHUNK_SIZE = 500;
 const STREAMING_THRESHOLD = 10 * 1024 * 1024; // 10MB
 
-async function computeFileHash(file: File): Promise<string> {
-  const buffer = Buffer.from(await file.arrayBuffer());
-  return createHash("sha256").update(buffer).digest("hex");
-}
-
 async function checkDuplicate(
   fileHash: string,
   fileName: string
@@ -144,7 +139,7 @@ export async function POST(request: NextRequest) {
 
     for (let fi = 0; fi < files.length; fi++) {
       const file = files[fi];
-      let source: SourceFile =
+      const source: SourceFile =
         detectSourceFile(file.name) ||
         sourceTypes[file.name] ||
         file.name

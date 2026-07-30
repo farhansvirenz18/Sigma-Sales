@@ -134,17 +134,17 @@ export default function HistoryPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">History</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">History</h1>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">
             Riwayat upload dan pemrosesan data
           </p>
         </div>
         <Link href="/upload">
-          <Button>
+          <Button className="w-full sm:w-auto">
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
@@ -164,7 +164,7 @@ export default function HistoryPage() {
                   setStatusFilter(e.target.value);
                   setPage(1);
                 }}
-                className="px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className="px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white flex-1 sm:flex-none"
               >
                 {statusOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -172,8 +172,8 @@ export default function HistoryPage() {
                   </option>
                 ))}
               </select>
-              <span className="text-sm text-gray-500">
-                {total} sesi ditemukan
+              <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">
+                {total} sesi
               </span>
             </div>
 
@@ -198,121 +198,174 @@ export default function HistoryPage() {
         </CardContent>
       </Card>
 
-      {/* Table */}
+      {/* Table (desktop) + Cards (mobile) */}
       <Card>
         <CardContent className="p-0">
           {loading ? (
-            <div className="p-8 space-y-3">
+            <div className="p-6 sm:p-8 space-y-3">
               {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-12 rounded-lg shimmer" />
+                <div key={i} className="h-12 sm:h-14 rounded-xl shimmer" />
               ))}
             </div>
           ) : sessions.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="text-center py-12 sm:py-16">
+              <div className="w-14 sm:w-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <svg className="w-7 sm:w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <p className="text-gray-500">Tidak ada sesi ditemukan</p>
+              <p className="text-gray-500 font-medium">Tidak ada sesi ditemukan</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50/50">
-                    <th className="py-3 px-4 w-10">
-                      <input
-                        type="checkbox"
-                        checked={
-                          sessions.length > 0 &&
-                          selected.size === sessions.length
-                        }
-                        onChange={toggleSelectAll}
-                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                    </th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">
-                      Session ID
-                    </th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">
-                      Tanggal
-                    </th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">
-                      Status
-                    </th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-600">
-                      Total
-                    </th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-600">
-                      Valid
-                    </th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-600">
-                      Error
-                    </th>
-                    <th className="text-center py-3 px-4 font-medium text-gray-600">
-                      Aksi
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sessions.map((session) => (
-                    <tr
-                      key={session.id}
-                      className={`border-b border-gray-100 table-row-hover ${
-                        selected.has(session.id) ? "bg-blue-50/50" : ""
-                      }`}
-                    >
-                      <td className="py-3 px-4">
+            <>
+              {/* Desktop table */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200 bg-gray-50/50">
+                      <th className="py-3 px-4 w-10">
+                        <input
+                          type="checkbox"
+                          checked={
+                            sessions.length > 0 &&
+                            selected.size === sessions.length
+                          }
+                          onChange={toggleSelectAll}
+                          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-600">
+                        Session ID
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-600">
+                        Tanggal
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-600">
+                        Status
+                      </th>
+                      <th className="text-right py-3 px-4 font-medium text-gray-600">
+                        Total
+                      </th>
+                      <th className="text-right py-3 px-4 font-medium text-gray-600">
+                        Valid
+                      </th>
+                      <th className="text-right py-3 px-4 font-medium text-gray-600">
+                        Error
+                      </th>
+                      <th className="text-center py-3 px-4 font-medium text-gray-600">
+                        Aksi
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sessions.map((session) => (
+                      <tr
+                        key={session.id}
+                        className={`border-b border-gray-100 table-row-hover ${
+                          selected.has(session.id) ? "bg-blue-50/50" : ""
+                        }`}
+                      >
+                        <td className="py-3 px-4">
+                          <input
+                            type="checkbox"
+                            checked={selected.has(session.id)}
+                            onChange={() => toggleSelect(session.id)}
+                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                        </td>
+                        <td className="py-3 px-4">
+                          <Link
+                            href={`/results/${session.id}`}
+                            className="font-mono text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                          >
+                            {session.id.slice(0, 8)}
+                          </Link>
+                        </td>
+                        <td className="py-3 px-4 text-gray-600">
+                          {formatDate(session.created_at)}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span
+                            className={`badge ${
+                              statusColors[session.status] || "badge-gray"
+                            }`}
+                          >
+                            {statusLabels[session.status] || session.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right text-gray-700">
+                          {session.total_rows.toLocaleString("id-ID")}
+                        </td>
+                        <td className="py-3 px-4 text-right text-emerald-600 font-medium">
+                          {session.valid_rows.toLocaleString("id-ID")}
+                        </td>
+                        <td className="py-3 px-4 text-right text-red-600 font-medium">
+                          {session.error_rows.toLocaleString("id-ID")}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <Link
+                            href={`/results/${session.id}`}
+                            className="text-blue-600 hover:text-blue-700 text-sm font-medium hover:underline"
+                          >
+                            Detail →
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile cards */}
+              <div className="md:hidden divide-y divide-gray-100">
+                {sessions.map((session) => (
+                  <Link
+                    key={session.id}
+                    href={`/results/${session.id}`}
+                    className="block p-4 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-2">
                         <input
                           type="checkbox"
                           checked={selected.has(session.id)}
-                          onChange={() => toggleSelect(session.id)}
+                          onChange={(e) => {
+                            e.preventDefault();
+                            toggleSelect(session.id);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
                           className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
-                      </td>
-                      <td className="py-3 px-4">
-                        <Link
-                          href={`/results/${session.id}`}
-                          className="font-mono text-sm text-blue-600 hover:text-blue-700 hover:underline"
-                        >
+                        <span className="font-mono text-sm font-medium text-gray-900">
                           {session.id.slice(0, 8)}
-                        </Link>
-                      </td>
-                      <td className="py-3 px-4 text-gray-600">
-                        {formatDate(session.created_at)}
-                      </td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`badge ${
-                            statusColors[session.status] || "badge-gray"
-                          }`}
-                        >
-                          {statusLabels[session.status] || session.status}
                         </span>
-                      </td>
-                      <td className="py-3 px-4 text-right text-gray-700">
-                        {session.total_rows.toLocaleString("id-ID")}
-                      </td>
-                      <td className="py-3 px-4 text-right text-emerald-600 font-medium">
-                        {session.valid_rows.toLocaleString("id-ID")}
-                      </td>
-                      <td className="py-3 px-4 text-right text-red-600 font-medium">
-                        {session.error_rows.toLocaleString("id-ID")}
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <Link
-                          href={`/results/${session.id}`}
-                          className="text-blue-600 hover:text-blue-700 text-sm font-medium hover:underline"
-                        >
-                          Detail →
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      </div>
+                      <span
+                        className={`badge text-xs ${
+                          statusColors[session.status] || "badge-gray"
+                        }`}
+                      >
+                        {statusLabels[session.status] || session.status}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mb-2">
+                      {formatDate(session.created_at)}
+                    </p>
+                    <div className="flex items-center space-x-4 text-xs">
+                      <span className="text-gray-500">
+                        Total: <span className="font-medium text-gray-700">{session.total_rows.toLocaleString("id-ID")}</span>
+                      </span>
+                      <span className="text-gray-500">
+                        Valid: <span className="font-medium text-emerald-600">{session.valid_rows.toLocaleString("id-ID")}</span>
+                      </span>
+                      <span className="text-gray-500">
+                        Error: <span className="font-medium text-red-600">{session.error_rows.toLocaleString("id-ID")}</span>
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
@@ -320,7 +373,7 @@ export default function HistoryPage() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-500">
+          <p className="text-xs sm:text-sm text-gray-500">
             Halaman {page} dari {totalPages}
           </p>
           <div className="flex space-x-2">

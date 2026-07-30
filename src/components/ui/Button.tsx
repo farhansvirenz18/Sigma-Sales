@@ -8,17 +8,20 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantStyles = {
-  primary: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
+  primary:
+    "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 focus:ring-blue-500 shadow-sm shadow-blue-600/20 hover:shadow-md hover:shadow-blue-600/25",
   secondary:
-    "bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-500",
-  danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
-  ghost: "text-gray-600 hover:text-gray-900 hover:bg-gray-100",
+    "bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300 focus:ring-gray-500",
+  danger:
+    "bg-red-600 text-white hover:bg-red-700 active:bg-red-800 focus:ring-red-500 shadow-sm shadow-red-600/20",
+  ghost:
+    "text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200",
 };
 
 const sizeStyles = {
-  sm: "px-3 py-1.5 text-sm",
-  md: "px-4 py-2 text-sm",
-  lg: "px-6 py-3 text-base",
+  sm: "px-3 py-1.5 text-sm rounded-lg min-h-[36px]",
+  md: "px-4 py-2 text-sm rounded-xl min-h-[40px]",
+  lg: "px-6 py-3 text-base rounded-xl min-h-[48px]",
 };
 
 export default function Button({
@@ -33,7 +36,7 @@ export default function Button({
   return (
     <button
       disabled={disabled || loading}
-      className={`inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
+      className={`inline-flex items-center justify-center font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
       {...props}
     >
       {loading && (

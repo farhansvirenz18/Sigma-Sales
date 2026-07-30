@@ -238,35 +238,40 @@ export default function UploadPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-5 sm:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
           Upload File Excel
         </h1>
-        <p className="text-gray-500 mt-1">
-          Upload 3 file sales, lalu proses otomatis
+        <p className="text-gray-500 mt-1 text-sm sm:text-base">
+          Upload file sales, lalu proses otomatis
         </p>
       </div>
 
       {/* Duplicate Confirmation Modal */}
       {duplicateInfo && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
-          <Card className="max-w-md w-full mx-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+          <Card className="max-w-sm w-full animate-scale-in">
             <CardHeader>
-              <h2 className="text-lg font-semibold text-gray-900">
+              <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900 text-center">
                 File Sudah Ada
               </h2>
-              <p className="text-sm text-gray-500">
-                File yang diupload sudah diproses sebelumnya (session: {duplicateInfo.existingSessionId.slice(0, 8)}...)
+              <p className="text-sm text-gray-500 text-center">
+                File sudah diproses sebelumnya (session: {duplicateInfo.existingSessionId.slice(0, 8)}...)
               </p>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-600">
-                Ingin menghapus data lama dan memproses ulang dengan file ini?
+              <p className="text-sm text-gray-600 text-center">
+                Ingin menghapus data lama dan memproses ulang?
               </p>
             </CardContent>
-            <CardFooter className="flex justify-end space-x-3">
+            <CardFooter className="flex justify-center space-x-3">
               <Button variant="secondary" onClick={handleUpsertCancel}>
                 Batal
               </Button>
@@ -280,7 +285,7 @@ export default function UploadPage() {
 
       {/* Step Indicator */}
       <Card>
-        <CardContent className="p-4">
+        <CardContent className="py-3 sm:py-4 px-4 sm:px-6">
           <div className="flex items-center justify-between">
             {steps.map((step, i) => {
               const stepIdx = getStepIndex();
@@ -289,9 +294,9 @@ export default function UploadPage() {
 
               return (
                 <div key={step.key} className="flex items-center flex-1 last:flex-none">
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-1.5 sm:space-x-2">
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
+                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-semibold transition-all duration-300 ${
                         isDone
                           ? "bg-emerald-500 text-white"
                           : isActive
@@ -300,15 +305,15 @@ export default function UploadPage() {
                       }`}
                     >
                       {isDone ? (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                         </svg>
                       ) : (
                         i + 1
                       )}
                     </div>
                     <span
-                      className={`text-sm font-medium hidden sm:block ${
+                      className={`text-xs sm:text-sm font-medium hidden sm:block ${
                         isActive
                           ? "text-gray-900"
                           : isDone
@@ -320,7 +325,7 @@ export default function UploadPage() {
                     </span>
                   </div>
                   {i < steps.length - 1 && (
-                    <div className="flex-1 mx-3">
+                    <div className="flex-1 mx-2 sm:mx-3">
                       <div
                         className={`h-0.5 rounded-full transition-all duration-500 ${
                           isDone ? "bg-emerald-500" : "bg-gray-100"
@@ -337,9 +342,9 @@ export default function UploadPage() {
 
       {/* Upload Step */}
       {state.step === "upload" && (
-        <div className="space-y-6 animate-fade-in">
+        <div className="space-y-5 sm:space-y-6 animate-fade-in">
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <FileDropzone
                 onFilesSelected={handleFilesSelected}
                 disabled={false}
@@ -348,9 +353,9 @@ export default function UploadPage() {
           </Card>
 
           {state.files.length > 0 && (
-            <Card>
+            <Card className="animate-slide-up">
               <CardHeader>
-                <h2 className="text-lg font-semibold text-gray-900">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900">
                   File Terpilih ({state.files.length}/3)
                 </h2>
               </CardHeader>
@@ -361,17 +366,15 @@ export default function UploadPage() {
           )}
 
           <Card>
-            <CardFooter className="flex justify-between">
-              <div>
-                <button
-                  onClick={handleOpenMapping}
-                  disabled={state.files.length === 0}
-                  className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  Custom Mapping (Advanced)
-                </button>
-              </div>
-              <div className="flex space-x-3">
+            <CardFooter className="flex flex-col sm:flex-row justify-between gap-3">
+              <button
+                onClick={handleOpenMapping}
+                disabled={state.files.length === 0}
+                className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2 disabled:opacity-40 disabled:cursor-not-allowed order-2 sm:order-1"
+              >
+                Custom Mapping (Advanced)
+              </button>
+              <div className="flex space-x-3 order-1 sm:order-2 w-full sm:w-auto">
                 <Button
                   variant="secondary"
                   onClick={() =>
@@ -385,12 +388,14 @@ export default function UploadPage() {
                       useCustomMapping: false,
                     })
                   }
+                  className="flex-1 sm:flex-none"
                 >
                   Reset
                 </Button>
                 <Button
                   onClick={handleProcessDirectly}
                   disabled={state.files.length === 0}
+                  className="flex-1 sm:flex-none"
                 >
                   Proses Sekarang →
                 </Button>
@@ -417,10 +422,10 @@ export default function UploadPage() {
         <div className="space-y-4 animate-fade-in">
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900">
                 Preview Hasil Transformasi
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-xs sm:text-sm text-gray-500">
                 Periksa hasil sebelum generate file final
               </p>
             </CardHeader>
@@ -448,14 +453,14 @@ export default function UploadPage() {
                         <h3 className="text-sm font-semibold text-blue-700 mb-2">
                           Finance Output ({p.financeRows.length} baris preview)
                         </h3>
-                        <div className="overflow-x-auto border border-gray-200 rounded-lg">
+                        <div className="overflow-x-auto border border-gray-200 rounded-xl">
                           <table className="w-full text-xs">
                             <thead>
-                              <tr className="bg-blue-50">
+                              <tr className="bg-blue-50/80">
                                 {Object.keys(p.financeRows[0]).map((col) => (
                                   <th
                                     key={col}
-                                    className="px-3 py-2 text-left font-medium text-blue-700 whitespace-nowrap"
+                                    className="px-3 py-2.5 text-left font-semibold text-blue-700 whitespace-nowrap"
                                   >
                                     {col}
                                   </th>
@@ -464,7 +469,7 @@ export default function UploadPage() {
                             </thead>
                             <tbody>
                               {p.financeRows.slice(0, 5).map((row, i) => (
-                                <tr key={i} className="border-t border-gray-100">
+                                <tr key={i} className="border-t border-gray-100 table-row-hover">
                                   {Object.values(row).map((val, j) => (
                                     <td
                                       key={j}
@@ -484,17 +489,16 @@ export default function UploadPage() {
                     {p.marketingRows.length > 0 && (
                       <div>
                         <h3 className="text-sm font-semibold text-purple-700 mb-2">
-                          Marketing Output ({p.marketingRows.length} baris
-                          preview)
+                          Marketing Output ({p.marketingRows.length} baris preview)
                         </h3>
-                        <div className="overflow-x-auto border border-gray-200 rounded-lg">
+                        <div className="overflow-x-auto border border-gray-200 rounded-xl">
                           <table className="w-full text-xs">
                             <thead>
-                              <tr className="bg-purple-50">
+                              <tr className="bg-purple-50/80">
                                 {Object.keys(p.marketingRows[0]).map((col) => (
                                   <th
                                     key={col}
-                                    className="px-3 py-2 text-left font-medium text-purple-700 whitespace-nowrap"
+                                    className="px-3 py-2.5 text-left font-semibold text-purple-700 whitespace-nowrap"
                                   >
                                     {col}
                                   </th>
@@ -503,7 +507,7 @@ export default function UploadPage() {
                             </thead>
                             <tbody>
                               {p.marketingRows.slice(0, 5).map((row, i) => (
-                                <tr key={i} className="border-t border-gray-100">
+                                <tr key={i} className="border-t border-gray-100 table-row-hover">
                                   {Object.values(row).map((val, j) => (
                                     <td
                                       key={j}
@@ -526,7 +530,7 @@ export default function UploadPage() {
           </Card>
 
           <Card>
-            <CardFooter className="flex justify-between">
+            <CardFooter className="flex flex-col sm:flex-row justify-between gap-3">
               <Button
                 variant="secondary"
                 onClick={() =>
@@ -536,10 +540,13 @@ export default function UploadPage() {
                     progress: prev.useCustomMapping ? 40 : 0,
                   }))
                 }
+                className="order-2 sm:order-1"
               >
                 {state.useCustomMapping ? "← Kembali ke Mapping" : "← Kembali ke Upload"}
               </Button>
-              <Button onClick={() => handleProcess()}>Konfirmasi & Proses →</Button>
+              <Button onClick={() => handleProcess()} className="order-1 sm:order-2">
+                Konfirmasi & Proses →
+              </Button>
             </CardFooter>
           </Card>
         </div>
@@ -548,17 +555,17 @@ export default function UploadPage() {
       {/* Processing / Done */}
       {(state.step === "processing" || state.step === "done") && (
         <Card className="animate-fade-in">
-          <CardContent className="p-8">
+          <CardContent className="p-8 sm:p-12">
             <div className="text-center space-y-4">
               {state.step === "done" ? (
-                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto">
-                  <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto">
+                  <svg className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
               ) : (
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto pulse-soft">
-                  <svg className="w-8 h-8 text-blue-600 animate-spin" fill="none" viewBox="0 0 24 24">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto pulse-soft">
+                  <svg className="w-8 h-8 sm:w-10 sm:h-10 text-blue-600 animate-spin" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
@@ -584,31 +591,25 @@ export default function UploadPage() {
 
       {/* Info */}
       <Card className="animate-fade-in">
-        <CardContent className="p-4">
-          <h3 className="font-medium text-gray-900 mb-2">
+        <CardContent className="p-4 sm:p-5">
+          <h3 className="font-medium text-gray-900 mb-3 text-sm sm:text-base">
             Format File yang Didukung:
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <div className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg">
-              <div className="w-2 h-2 bg-blue-500 rounded-full" />
-              <span className="text-sm text-gray-600">
-                <strong>SALES DAILY.xlsx</strong> — Harian
-              </span>
-            </div>
-            <div className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg">
-              <div className="w-2 h-2 bg-purple-500 rounded-full" />
-              <span className="text-sm text-gray-600">
-                <strong>SALES MP.xlsx</strong> — Marketplace
-              </span>
-            </div>
-            <div className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg">
-              <div className="w-2 h-2 bg-amber-500 rounded-full" />
-              <span className="text-sm text-gray-600">
-                <strong>SALES Produk.xlsx</strong> — Produk
-              </span>
-            </div>
+            {[
+              { name: "SALES DAILY.xlsx", desc: "Harian", color: "bg-blue-500" },
+              { name: "SALES MP.xlsx", desc: "Marketplace", color: "bg-purple-500" },
+              { name: "SALES Produk.xlsx", desc: "Produk", color: "bg-amber-500" },
+            ].map((item) => (
+              <div key={item.name} className="flex items-center space-x-2.5 p-2.5 bg-gray-50 rounded-xl">
+                <div className={`w-2.5 h-2.5 ${item.color} rounded-full flex-shrink-0`} />
+                <span className="text-xs sm:text-sm text-gray-600">
+                  <strong>{item.name}</strong> — {item.desc}
+                </span>
+              </div>
+            ))}
           </div>
-          <p className="text-xs text-gray-400 mt-2">
+          <p className="text-xs text-gray-400 mt-3">
             Upload ulang file yang sama? Data lama akan otomatis diganti.
           </p>
         </CardContent>

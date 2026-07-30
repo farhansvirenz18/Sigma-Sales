@@ -113,7 +113,6 @@ export default function ResultsPage() {
     return () => { cancelled = true; };
   }, [sessionId, refreshKey]);
 
-  // Polling
   useEffect(() => {
     if (!data) return;
     if (["processing", "pending", "validating"].includes(data.session.status)) {
@@ -218,8 +217,8 @@ export default function ResultsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="h-12 w-64 rounded-xl shimmer" />
-        <div className="h-48 rounded-2xl shimmer" />
+        <div className="h-10 sm:h-12 w-48 sm:w-64 rounded-xl shimmer" />
+        <div className="h-40 sm:h-48 rounded-2xl shimmer" />
         <div className="h-64 rounded-2xl shimmer" />
       </div>
     );
@@ -236,19 +235,19 @@ export default function ResultsPage() {
     : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
           <div className="flex items-center space-x-3">
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 font-mono">
               Sesi {sessionId.slice(0, 8)}
             </h1>
             <span className={`badge ${statusColors[session.status] || "badge-gray"}`}>
               {statusLabels[session.status] || session.status}
             </span>
           </div>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">
             {formatDate(session.created_at)}
           </p>
         </div>
@@ -272,15 +271,15 @@ export default function ResultsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex space-x-1 bg-gray-100 p-1 rounded-xl w-fit">
+      <div className="flex bg-gray-100/80 p-1 rounded-2xl w-fit">
         {(["overview", "errors", "logs"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`px-3 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 ${
               activeTab === tab
                 ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
+                : "text-gray-500 hover:text-gray-700 hover:bg-white/50"
             }`}
           >
             {tab === "overview" && "Ringkasan"}
@@ -292,10 +291,10 @@ export default function ResultsPage() {
 
       {/* Overview Tab */}
       {activeTab === "overview" && (
-        <div className="space-y-6 animate-fade-in">
+        <div className="space-y-5 sm:space-y-6 animate-fade-in">
           {/* Progress */}
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-5 sm:p-6">
               {isProcessing ? (
                 <div className="space-y-3">
                   <ProgressBar value={50} size="lg" showLabel />
@@ -304,27 +303,27 @@ export default function ResultsPage() {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <div className="text-center p-4 bg-gray-50 rounded-xl">
-                    <p className="text-2xl font-bold text-gray-900">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 stagger-children">
+                  <div className="text-center p-3 sm:p-4 bg-gray-50 rounded-2xl">
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900">
                       {session.total_rows.toLocaleString("id-ID")}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">Total Baris</p>
                   </div>
-                  <div className="text-center p-4 bg-emerald-50 rounded-xl">
-                    <p className="text-2xl font-bold text-emerald-600">
+                  <div className="text-center p-3 sm:p-4 bg-emerald-50 rounded-2xl">
+                    <p className="text-xl sm:text-2xl font-bold text-emerald-600">
                       {session.valid_rows.toLocaleString("id-ID")}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">Valid</p>
                   </div>
-                  <div className="text-center p-4 bg-red-50 rounded-xl">
-                    <p className="text-2xl font-bold text-red-600">
+                  <div className="text-center p-3 sm:p-4 bg-red-50 rounded-2xl">
+                    <p className="text-xl sm:text-2xl font-bold text-red-600">
                       {session.error_rows.toLocaleString("id-ID")}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">Error</p>
                   </div>
-                  <div className="text-center p-4 bg-blue-50 rounded-xl">
-                    <p className="text-2xl font-bold text-blue-600">
+                  <div className="text-center p-3 sm:p-4 bg-blue-50 rounded-2xl">
+                    <p className="text-xl sm:text-2xl font-bold text-blue-600">
                       {progress}%
                     </p>
                     <p className="text-xs text-gray-500 mt-1">Success Rate</p>
@@ -338,31 +337,31 @@ export default function ResultsPage() {
           {outputs.length > 0 && (
             <Card>
               <CardHeader>
-                <h2 className="text-lg font-semibold text-gray-900">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900">
                   File Output
                 </h2>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   {outputs.map((file) => (
                     <div
                       key={file.id}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-all group"
                     >
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-3 min-w-0">
                         <div
-                          className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                          className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
                             file.file_type === "FINANCE"
-                              ? "bg-blue-100 text-blue-600"
-                              : "bg-purple-100 text-purple-600"
+                              ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-sm shadow-blue-600/20"
+                              : "bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-sm shadow-purple-600/20"
                           }`}
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           </svg>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">
                             {file.file_name}
                           </p>
                           <p className="text-xs text-gray-500">
@@ -377,6 +376,7 @@ export default function ResultsPage() {
                         onClick={() =>
                           handleDownload(file.id, file.file_name)
                         }
+                        className="flex-shrink-0"
                       >
                         <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -394,7 +394,7 @@ export default function ResultsPage() {
           {session.files_uploaded && session.files_uploaded.length > 0 && (
             <Card>
               <CardHeader>
-                <h2 className="text-lg font-semibold text-gray-900">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900">
                   File yang Diupload
                 </h2>
               </CardHeader>
@@ -404,17 +404,17 @@ export default function ResultsPage() {
                     (file: { name: string; source: string; row_count: number }, i: number) => (
                       <div
                         key={i}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-xl"
                       >
-                        <div className="flex items-center space-x-3">
-                          <span className="badge badge-gray text-xs">
+                        <div className="flex items-center space-x-3 min-w-0">
+                          <span className="badge badge-gray text-xs flex-shrink-0">
                             {file.source}
                           </span>
-                          <span className="text-sm text-gray-700">
+                          <span className="text-sm text-gray-700 truncate">
                             {file.name}
                           </span>
                         </div>
-                        <span className="text-sm text-gray-500">
+                        <span className="text-sm text-gray-500 flex-shrink-0">
                           {file.row_count.toLocaleString("id-ID")} baris
                         </span>
                       </div>
@@ -432,12 +432,12 @@ export default function ResultsPage() {
         <div className="animate-fade-in">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">
+                  <h2 className="text-base sm:text-lg font-semibold text-gray-900">
                     Data dengan Error
                   </h2>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-xs sm:text-sm text-gray-500">
                     {errorRows.length} baris dengan error validasi
                   </p>
                 </div>
@@ -470,12 +470,13 @@ export default function ResultsPage() {
             <CardContent>
               {errorRows.length === 0 ? (
                 <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <p className="text-gray-500">Tidak ada error</p>
+                  <p className="text-gray-500 font-medium">Tidak ada error</p>
+                  <p className="text-sm text-gray-400 mt-1">Semua data valid</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -545,12 +546,12 @@ export default function ResultsPage() {
         <div className="animate-fade-in">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">
+                  <h2 className="text-base sm:text-lg font-semibold text-gray-900">
                     Processing Logs
                   </h2>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-xs sm:text-sm text-gray-500">
                     {logs.length} langkah pemrosesan
                   </p>
                 </div>
@@ -588,7 +589,7 @@ export default function ResultsPage() {
                   {logs.map((log) => (
                     <div
                       key={log.id}
-                      className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50"
+                      className="flex items-start space-x-3 p-3 rounded-xl hover:bg-gray-50 transition-colors"
                     >
                       <div
                         className={`w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 ${
@@ -600,7 +601,7 @@ export default function ResultsPage() {
                         }`}
                       />
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2 flex-wrap">
                           <span className="text-sm font-medium text-gray-900">
                             {log.step}
                           </span>
