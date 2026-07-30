@@ -161,7 +161,6 @@ export function applyFinanceTransforms(
 
     financeRow["HPP Sigma"] = price ? price.hpp : 0;
     financeRow["Total Bayar"] = toNumber(row.raw_data.Totalperline);
-    financeRow["Admin"] = resolveAdmin(String(row.raw_data.Toko || ""));
 
     return financeRow;
   });
@@ -199,9 +198,4 @@ export function applyMarketingTransforms(
   });
 }
 
-function resolveAdmin(toko: string): string {
-  if (toko.includes("|")) {
-    return toko.split("|")[1] || toko;
-  }
-  return toko;
-}
+

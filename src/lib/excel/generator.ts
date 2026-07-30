@@ -19,7 +19,6 @@ export async function generateFinanceExcel(
     { header: "Advertiser", key: "Advertiser", width: 15 },
     { header: "Platform", key: "Platform", width: 15 },
     { header: "Nama Toko", key: "Nama Toko", width: 20 },
-    { header: "Admin", key: "Admin", width: 15 },
     { header: "Produk Name", key: "Produk Name", width: 20 },
     { header: "Jumlah", key: "Jumlah", width: 10 },
     { header: "Omzet", key: "Omzet", width: 15 },
@@ -35,7 +34,7 @@ export async function generateFinanceExcel(
     sheet.addRow(row);
   }
 
-  addNumberFormats(sheet, [12, 13, 14, 15, 16]);
+  addNumberFormats(sheet, [11, 12, 13, 14, 15]);
 
   const buffer = await workbook.xlsx.writeBuffer();
   const filePath = `${sessionId}/FINANCE_${Date.now()}.xlsx`;
@@ -80,7 +79,6 @@ export async function generateMarketingExcel(
     { header: "Advertiser", key: "Advertiser", width: 15 },
     { header: "Platform", key: "Platform", width: 15 },
     { header: "Nama Toko", key: "Nama Toko", width: 20 },
-    { header: "Admin", key: "Admin", width: 15 },
     { header: "Produk", key: "Produk", width: 20 },
     { header: "Jumlah", key: "Jumlah", width: 10 },
     { header: "Omzet", key: "Omzet", width: 15 },
@@ -97,7 +95,7 @@ export async function generateMarketingExcel(
     sheet.addRow(row);
   }
 
-  addNumberFormats(sheet, [15, 16, 17, 19]);
+  addNumberFormats(sheet, [14, 15, 16, 18]);
 
   const buffer = await workbook.xlsx.writeBuffer();
   const filePath = `${sessionId}/MARKETING_${Date.now()}.xlsx`;
