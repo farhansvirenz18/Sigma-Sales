@@ -5,24 +5,17 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import FileDropzone from "@/components/upload/FileDropzone";
 import FilePreview from "@/components/upload/FilePreview";
-import ColumnMapper, {
-  DetectedFile,
-  MappingEntry,
-} from "@/components/upload/ColumnMapper";
 import Button from "@/components/ui/Button";
 import Card, { CardHeader, CardContent, CardFooter } from "@/components/ui/Card";
 import ProgressBar from "@/components/ui/ProgressBar";
 
-type Step = "upload" | "mapping" | "preview" | "processing" | "done";
+type Step = "upload" | "processing" | "done";
 
 interface UploadState {
   files: File[];
   step: Step;
   progress: number;
-  detectedFiles: DetectedFile[];
-  previewData: Record<string, unknown> | null;
   sessionId: string | null;
-  useCustomMapping: boolean;
 }
 
 interface DuplicateInfo {
@@ -36,12 +29,8 @@ export default function UploadPage() {
     files: [],
     step: "upload",
     progress: 0,
-    detectedFiles: [],
-    previewData: null,
     sessionId: null,
-    useCustomMapping: false,
   });
-  const [loadingPreview, setLoadingPreview] = useState(false);
   const [duplicateInfo, setDuplicateInfo] = useState<DuplicateInfo | null>(null);
 
   const handleFilesSelected = useCallback((newFiles: File[]) => {
@@ -59,101 +48,12 @@ export default function UploadPage() {
     }));
   }, []);
 
-  const handleMappingSave = async (mappings: MappingEntry[]) => {
-    setState((prev) => ({ ...prev, progress: 50 }));
-    setLoadingPreview(true);
-
-    try {
-      if (mappings.length > 0) {
-        const res = await fetch("/api/mappings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mappings }),
-        });
-        if (!res.ok) throw new Error("Save mappings failed");
-      }
-
-      const fileDataPromises = state.files.map(async (file) => ({
-        name: file.name,
-        data: await file.arrayBuffer().then((buf) =>
-          btoa(String.fromCharCode(...new Uint8Array(buf)))
-        ),
-      }));
-      const fileData = await Promise.all(fileDataPromises);
-
-      const previewRes = await fetch("/api/preview", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ files: fileData, mappings }),
-      });
-
-      if (previewRes.ok) {
-        const previewJson = await previewRes.json();
-        setState((prev) => ({
-          ...prev,
-          previewData: previewJson,
-          step: "preview",
-          progress: 60,
-        }));
-      } else {
-        await handleProcess();
-      }
-    } catch (error) {
-      console.error("Preview error:", error);
-      await handleProcess();
-    } finally {
-      setLoadingPreview(false);
-    }
-  };
-
-  const handleSkipMapping = async () => {
-    setState((prev) => ({ ...prev, progress: 50 }));
-    await handleProcess();
-  };
-
-  const handleProcessDirectly = async () => {
-    if (state.files.length === 0) {
-      toast.error("Pilih file terlebih dahulu");
-      return;
-    }
-    setState((prev) => ({ ...prev, progress: 30 }));
-    await handleProcess();
-  };
-
-  const handleOpenMapping = async () => {
-    if (state.files.length === 0) {
-      toast.error("Pilih file terlebih dahulu");
-      return;
-    }
-
-    setState((prev) => ({ ...prev, progress: 20 }));
-
-    try {
-      const formData = new FormData();
-      state.files.forEach((file) => formData.append("files", file));
-
-      const res = await fetch("/api/detect-columns", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) throw new Error("Detect failed");
-
-      const data = await res.json();
-      setState((prev) => ({
-        ...prev,
-        detectedFiles: data.files,
-        step: "mapping",
-        progress: 40,
-        useCustomMapping: true,
-      }));
-    } catch (error) {
-      console.error("Detect error:", error);
-      toast.error("Gagal mendeteksi kolom");
-    }
-  };
-
   const handleProcess = async (forceUpsert = false) => {
+    if (state.files.length === 0) {
+      toast.error("Pilih file terlebih dahulu");
+      return;
+    }
+
     setState((prev) => ({ ...prev, step: "processing", progress: 70 }));
 
     try {
@@ -218,19 +118,11 @@ export default function UploadPage() {
     setDuplicateInfo(null);
   };
 
-  const steps = state.useCustomMapping
-    ? [
-        { key: "upload", label: "Pilih File" },
-        { key: "mapping", label: "Mapping" },
-        { key: "preview", label: "Preview" },
-        { key: "processing", label: "Proses" },
-        { key: "done", label: "Selesai" },
-      ]
-    : [
-        { key: "upload", label: "Pilih File" },
-        { key: "processing", label: "Proses" },
-        { key: "done", label: "Selesai" },
-      ];
+  const steps = [
+    { key: "upload", label: "Pilih File" },
+    { key: "processing", label: "Proses" },
+    { key: "done", label: "Selesai" },
+  ];
 
   const getStepIndex = () => {
     const idx = steps.findIndex((s) => s.key === state.step);
@@ -245,7 +137,7 @@ export default function UploadPage() {
           Upload File Excel
         </h1>
         <p className="text-gray-500 mt-1 text-sm sm:text-base">
-          Upload file sales, lalu proses otomatis
+          Upload 3 file sales, lalu proses otomatis
         </p>
       </div>
 
@@ -367,13 +259,9 @@ export default function UploadPage() {
 
           <Card>
             <CardFooter className="flex flex-col sm:flex-row justify-between gap-3">
-              <button
-                onClick={handleOpenMapping}
-                disabled={state.files.length === 0}
-                className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2 disabled:opacity-40 disabled:cursor-not-allowed order-2 sm:order-1"
-              >
-                Custom Mapping (Advanced)
-              </button>
+              <p className="text-xs text-gray-400 order-2 sm:order-1">
+                Mapping kolom otomatis dari database
+              </p>
               <div className="flex space-x-3 order-1 sm:order-2 w-full sm:w-auto">
                 <Button
                   variant="secondary"
@@ -382,10 +270,7 @@ export default function UploadPage() {
                       files: [],
                       step: "upload",
                       progress: 0,
-                      detectedFiles: [],
-                      previewData: null,
                       sessionId: null,
-                      useCustomMapping: false,
                     })
                   }
                   className="flex-1 sm:flex-none"
@@ -393,160 +278,13 @@ export default function UploadPage() {
                   Reset
                 </Button>
                 <Button
-                  onClick={handleProcessDirectly}
+                  onClick={() => handleProcess()}
                   disabled={state.files.length === 0}
                   className="flex-1 sm:flex-none"
                 >
                   Proses Sekarang →
                 </Button>
               </div>
-            </CardFooter>
-          </Card>
-        </div>
-      )}
-
-      {/* Mapping Step */}
-      {state.step === "mapping" && (
-        <div className="animate-fade-in">
-          <ColumnMapper
-            files={state.detectedFiles}
-            onSave={handleMappingSave}
-            onSkip={handleSkipMapping}
-            loading={loadingPreview}
-          />
-        </div>
-      )}
-
-      {/* Preview Step */}
-      {state.step === "preview" && state.previewData && (
-        <div className="space-y-4 animate-fade-in">
-          <Card>
-            <CardHeader>
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900">
-                Preview Hasil Transformasi
-              </h2>
-              <p className="text-xs sm:text-sm text-gray-500">
-                Periksa hasil sebelum generate file final
-              </p>
-            </CardHeader>
-            <CardContent>
-              {Object.entries(
-                (state.previewData as { previews: Record<string, unknown> })
-                  .previews || {}
-              ).map(([fileName, preview]) => {
-                const p = preview as {
-                  source: string;
-                  financeRows: Record<string, unknown>[];
-                  marketingRows: Record<string, unknown>[];
-                };
-                return (
-                  <div key={fileName} className="space-y-4">
-                    <div className="flex items-center space-x-2">
-                      <span className="badge badge-gray">{p.source}</span>
-                      <span className="text-sm font-medium text-gray-700">
-                        {fileName}
-                      </span>
-                    </div>
-
-                    {p.financeRows.length > 0 && (
-                      <div>
-                        <h3 className="text-sm font-semibold text-blue-700 mb-2">
-                          Finance Output ({p.financeRows.length} baris preview)
-                        </h3>
-                        <div className="overflow-x-auto border border-gray-200 rounded-xl">
-                          <table className="w-full text-xs">
-                            <thead>
-                              <tr className="bg-blue-50/80">
-                                {Object.keys(p.financeRows[0]).map((col) => (
-                                  <th
-                                    key={col}
-                                    className="px-3 py-2.5 text-left font-semibold text-blue-700 whitespace-nowrap"
-                                  >
-                                    {col}
-                                  </th>
-                                ))}
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {p.financeRows.slice(0, 5).map((row, i) => (
-                                <tr key={i} className="border-t border-gray-100 table-row-hover">
-                                  {Object.values(row).map((val, j) => (
-                                    <td
-                                      key={j}
-                                      className="px-3 py-2 text-gray-600 whitespace-nowrap"
-                                    >
-                                      {String(val ?? "-").slice(0, 30)}
-                                    </td>
-                                  ))}
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    )}
-
-                    {p.marketingRows.length > 0 && (
-                      <div>
-                        <h3 className="text-sm font-semibold text-purple-700 mb-2">
-                          Marketing Output ({p.marketingRows.length} baris preview)
-                        </h3>
-                        <div className="overflow-x-auto border border-gray-200 rounded-xl">
-                          <table className="w-full text-xs">
-                            <thead>
-                              <tr className="bg-purple-50/80">
-                                {Object.keys(p.marketingRows[0]).map((col) => (
-                                  <th
-                                    key={col}
-                                    className="px-3 py-2.5 text-left font-semibold text-purple-700 whitespace-nowrap"
-                                  >
-                                    {col}
-                                  </th>
-                                ))}
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {p.marketingRows.slice(0, 5).map((row, i) => (
-                                <tr key={i} className="border-t border-gray-100 table-row-hover">
-                                  {Object.values(row).map((val, j) => (
-                                    <td
-                                      key={j}
-                                      className="px-3 py-2 text-gray-600 whitespace-nowrap"
-                                    >
-                                      {String(val ?? "-").slice(0, 30)}
-                                    </td>
-                                  ))}
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardFooter className="flex flex-col sm:flex-row justify-between gap-3">
-              <Button
-                variant="secondary"
-                onClick={() =>
-                  setState((prev) => ({
-                    ...prev,
-                    step: prev.useCustomMapping ? "mapping" : "upload",
-                    progress: prev.useCustomMapping ? 40 : 0,
-                  }))
-                }
-                className="order-2 sm:order-1"
-              >
-                {state.useCustomMapping ? "← Kembali ke Mapping" : "← Kembali ke Upload"}
-              </Button>
-              <Button onClick={() => handleProcess()} className="order-1 sm:order-2">
-                Konfirmasi & Proses →
-              </Button>
             </CardFooter>
           </Card>
         </div>

@@ -59,8 +59,8 @@ Tidak semua file sumber memiliki kolom yang dibutuhkan output:
 **Solusi:**
 - Mapping dikonfigurasi di database (`column_mappings` table)
 - Kolom yang tidak ada di source akan diisi kosong/null di output
-- ColumnMapper UI (opsional) menampilkan peringatan "kolom tidak ditemukan" tetapi tetap melanjutkan proses
-- Default flow menggunakan mapping seed data yang sudah dikonfigurasi
+- Mapper engine membaca mapping dari DB saat proses transformasi
+- Seed data sudah dikonfigurasi untuk SALES_DAILY, SALES_MP, SALES_PRODUK
 
 ---
 

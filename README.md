@@ -17,7 +17,7 @@ Sistem otomatis untuk import dan transformasi data sales dari 3 file Excel menja
 - Upsert / re-upload file yang sama dengan konfirmasi
 - Streaming reader untuk file besar (>10MB)
 - Validasi data otomatis berbasis database rules
-- Transformasi data fleksibel via mapping rule DB
+- Transformasi data via column mapping di database
 - Bundle splitting (BOXL → item terpisah)
 - Auto region resolution dari alamat pengiriman
 - Generate 2 file output (FINANCE 16 kolom & MARKETING 20 kolom)
@@ -109,9 +109,6 @@ sigma-sales/
 │   ├── app/
 │   │   ├── api/
 │   │   │   ├── upload/route.ts              # Upload Excel files
-│   │   │   ├── preview/route.ts             # Preview Excel sebelum proses
-│   │   │   ├── detect-columns/route.ts      # Auto-detect kolom
-│   │   │   ├── mappings/route.ts            # Column mappings CRUD
 │   │   │   ├── sessions/route.ts            # List sessions
 │   │   │   ├── sessions/[id]/route.ts       # Session detail
 │   │   │   ├── sessions/[id]/rollback/route.ts  # Rollback session
@@ -138,8 +135,7 @@ sigma-sales/
 │   │   │   └── OutputPreviewModal.tsx
 │   │   ├── upload/                          # Upload components
 │   │   │   ├── FileDropzone.tsx
-│   │   │   ├── FilePreview.tsx
-│   │   │   └── ColumnMapper.tsx
+│   │   │   └── FilePreview.tsx
 │   │   └── charts/                          # Recharts components
 │   │       ├── MonthlyChart.tsx
 │   │       ├── PlatformPie.tsx
@@ -171,9 +167,6 @@ sigma-sales/
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/api/upload` | Upload 3 Excel files + parse + store |
-| POST | `/api/preview` | Preview Excel data sebelum proses |
-| POST | `/api/detect-columns` | Auto-detect kolom dari header |
-| GET | `/api/mappings` | Get column mappings |
 | GET | `/api/sessions` | List all sessions |
 | GET | `/api/sessions/[id]` | Get session detail |
 | POST | `/api/sessions/[id]/rollback` | Rollback session |
