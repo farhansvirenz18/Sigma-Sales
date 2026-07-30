@@ -10,9 +10,17 @@ interface TransformContext {
 }
 
 let cachedContext: TransformContext | null = null;
+let cacheTimestamp = 0;
+const CACHE_TTL = 60000;
+
+export function clearTransformCache(): void {
+  cachedContext = null;
+  cacheTimestamp = 0;
+}
 
 export async function loadTransformContext(): Promise<TransformContext> {
-  if (cachedContext) return cachedContext;
+  const now = Date.now();
+  if (cachedContext && now - cacheTimestamp < CACHE_TTL) return cachedContext;
 
   const [productsRes, pricesRes, mappingsRes] = await Promise.all([
     supabaseAdmin.from("products").select("code, name").eq("is_active", true),
@@ -36,6 +44,7 @@ export async function loadTransformContext(): Promise<TransformContext> {
     productPrices,
     mappings: (mappingsRes.data as ColumnMapping[]) || [],
   };
+  cacheTimestamp = Date.now();
 
   return cachedContext;
 }

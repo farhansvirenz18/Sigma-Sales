@@ -16,6 +16,10 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const files = formData.getAll("files") as File[];
+    const sourceTypesStr = formData.get("sourceTypes") as string | null;
+    const sourceTypes: Record<string, string> = sourceTypesStr
+      ? JSON.parse(sourceTypesStr)
+      : {};
 
     if (!files || files.length === 0) {
       return NextResponse.json(
@@ -48,11 +52,14 @@ export async function POST(request: NextRequest) {
     let totalRows = 0;
 
     for (const file of files) {
-      const source = detectSourceFile(file.name);
+      let source = detectSourceFile(file.name);
+      if (!source && sourceTypes[file.name]) {
+        source = sourceTypes[file.name] as SourceFile;
+      }
       if (!source) {
         allErrors.push({
           row: 0,
-          message: `Cannot detect source file type: ${file.name}`,
+          message: `Cannot detect source file type: ${file.name}. Provide sourceTypes mapping.`,
           file: file.name,
         });
         continue;
