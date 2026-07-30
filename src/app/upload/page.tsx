@@ -22,6 +22,7 @@ interface UploadState {
   detectedFiles: DetectedFile[];
   previewData: Record<string, unknown> | null;
   sessionId: string | null;
+  useCustomMapping: boolean;
 }
 
 export default function UploadPage() {
@@ -33,6 +34,7 @@ export default function UploadPage() {
     detectedFiles: [],
     previewData: null,
     sessionId: null,
+    useCustomMapping: false,
   });
   const [loadingPreview, setLoadingPreview] = useState(false);
 
@@ -50,38 +52,6 @@ export default function UploadPage() {
       files: prev.files.filter((_, i) => i !== index),
     }));
   }, []);
-
-  const handleDetectColumns = async () => {
-    if (state.files.length === 0) {
-      toast.error("Pilih file terlebih dahulu");
-      return;
-    }
-
-    setState((prev) => ({ ...prev, progress: 20 }));
-
-    try {
-      const formData = new FormData();
-      state.files.forEach((file) => formData.append("files", file));
-
-      const res = await fetch("/api/detect-columns", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) throw new Error("Detect failed");
-
-      const data = await res.json();
-      setState((prev) => ({
-        ...prev,
-        detectedFiles: data.files,
-        step: "mapping",
-        progress: 40,
-      }));
-    } catch (error) {
-      console.error("Detect error:", error);
-      toast.error("Gagal mendeteksi kolom");
-    }
-  };
 
   const handleMappingSave = async (mappings: MappingEntry[]) => {
     setState((prev) => ({ ...prev, progress: 50 }));
@@ -136,6 +106,48 @@ export default function UploadPage() {
     await handleProcess();
   };
 
+  const handleProcessDirectly = async () => {
+    if (state.files.length === 0) {
+      toast.error("Pilih file terlebih dahulu");
+      return;
+    }
+    setState((prev) => ({ ...prev, progress: 30 }));
+    await handleProcess();
+  };
+
+  const handleOpenMapping = async () => {
+    if (state.files.length === 0) {
+      toast.error("Pilih file terlebih dahulu");
+      return;
+    }
+
+    setState((prev) => ({ ...prev, progress: 20 }));
+
+    try {
+      const formData = new FormData();
+      state.files.forEach((file) => formData.append("files", file));
+
+      const res = await fetch("/api/detect-columns", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error("Detect failed");
+
+      const data = await res.json();
+      setState((prev) => ({
+        ...prev,
+        detectedFiles: data.files,
+        step: "mapping",
+        progress: 40,
+        useCustomMapping: true,
+      }));
+    } catch (error) {
+      console.error("Detect error:", error);
+      toast.error("Gagal mendeteksi kolom");
+    }
+  };
+
   const handleProcess = async () => {
     setState((prev) => ({ ...prev, step: "processing", progress: 70 }));
 
@@ -161,15 +173,9 @@ export default function UploadPage() {
         step: "done",
       }));
 
-      if (uploadData.status === "completed") {
-        toast.success(
-          `Berhasil! ${uploadData.financeRows} baris FINANCE, ${uploadData.marketingRows} baris MARKETING`
-        );
-      } else {
-        toast.success(
-          `Upload ${uploadData.totalRows} baris, ${uploadData.validRows} valid, ${uploadData.errorRows} error`
-        );
-      }
+      toast.success(
+        `Upload ${uploadData.totalRows} baris berhasil! Sedang diproses...`
+      );
 
       setTimeout(() => {
         router.push(`/results/${uploadData.sessionId}`);
@@ -185,13 +191,19 @@ export default function UploadPage() {
     }
   };
 
-  const steps = [
-    { key: "upload", label: "Pilih File" },
-    { key: "mapping", label: "Mapping" },
-    { key: "preview", label: "Preview" },
-    { key: "processing", label: "Proses" },
-    { key: "done", label: "Selesai" },
-  ];
+  const steps = state.useCustomMapping
+    ? [
+        { key: "upload", label: "Pilih File" },
+        { key: "mapping", label: "Mapping" },
+        { key: "preview", label: "Preview" },
+        { key: "processing", label: "Proses" },
+        { key: "done", label: "Selesai" },
+      ]
+    : [
+        { key: "upload", label: "Pilih File" },
+        { key: "processing", label: "Proses" },
+        { key: "done", label: "Selesai" },
+      ];
 
   const getStepIndex = () => {
     const idx = steps.findIndex((s) => s.key === state.step);
@@ -206,7 +218,7 @@ export default function UploadPage() {
           Upload File Excel
         </h1>
         <p className="text-gray-500 mt-1">
-          Upload file sales, mapping kolom, lalu proses otomatis
+          Upload 3 file sales, lalu proses otomatis
         </p>
       </div>
 
@@ -293,28 +305,40 @@ export default function UploadPage() {
           )}
 
           <Card>
-            <CardFooter className="flex justify-end space-x-3">
-              <Button
-                variant="secondary"
-                onClick={() =>
-                  setState({
-                    files: [],
-                    step: "upload",
-                    progress: 0,
-                    detectedFiles: [],
-                    previewData: null,
-                    sessionId: null,
-                  })
-                }
-              >
-                Reset
-              </Button>
-              <Button
-                onClick={handleDetectColumns}
-                disabled={state.files.length === 0}
-              >
-                Lanjut ke Mapping →
-              </Button>
+            <CardFooter className="flex justify-between">
+              <div>
+                <button
+                  onClick={handleOpenMapping}
+                  disabled={state.files.length === 0}
+                  className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Custom Mapping (Advanced)
+                </button>
+              </div>
+              <div className="flex space-x-3">
+                <Button
+                  variant="secondary"
+                  onClick={() =>
+                    setState({
+                      files: [],
+                      step: "upload",
+                      progress: 0,
+                      detectedFiles: [],
+                      previewData: null,
+                      sessionId: null,
+                      useCustomMapping: false,
+                    })
+                  }
+                >
+                  Reset
+                </Button>
+                <Button
+                  onClick={handleProcessDirectly}
+                  disabled={state.files.length === 0}
+                >
+                  Proses Sekarang →
+                </Button>
+              </div>
             </CardFooter>
           </Card>
         </div>
@@ -452,10 +476,14 @@ export default function UploadPage() {
               <Button
                 variant="secondary"
                 onClick={() =>
-                  setState((prev) => ({ ...prev, step: "mapping", progress: 40 }))
-              }
+                  setState((prev) => ({
+                    ...prev,
+                    step: prev.useCustomMapping ? "mapping" : "upload",
+                    progress: prev.useCustomMapping ? 40 : 0,
+                  }))
+                }
               >
-                ← Kembali ke Mapping
+                {state.useCustomMapping ? "← Kembali ke Mapping" : "← Kembali ke Upload"}
               </Button>
               <Button onClick={handleProcess}>Konfirmasi & Proses →</Button>
             </CardFooter>
@@ -527,8 +555,7 @@ export default function UploadPage() {
             </div>
           </div>
           <p className="text-xs text-gray-400 mt-2">
-            File baru dengan kolom berbeda juga didukung! Sistem akan mendeteksi
-            kolom secara otomatis.
+            Mapping kolom sudah dikonfigurasi di database. Untuk format baru, gunakan &quot;Custom Mapping&quot;.
           </p>
         </CardContent>
       </Card>

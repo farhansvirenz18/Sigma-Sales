@@ -45,7 +45,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3 group">
-            <div className="relative w-11 h-11 rounded-xl overflow-hidden shadow-md group-hover:shadow-lg transition-shadow ring-2 ring-blue-100 group-hover:ring-blue-200">
+            <div className="relative w-12 h-12 rounded-xl overflow-hidden shadow-md group-hover:shadow-lg transition-shadow ring-2 ring-blue-100 group-hover:ring-blue-200">
               <Image
                 src="/images/icon_sigma.png"
                 alt="Sigma Sales"
