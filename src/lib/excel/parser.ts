@@ -47,6 +47,52 @@ export function parseExcelFile(
   }
 }
 
+export async function parseExcelFileStreaming(
+  buffer: Buffer,
+  source: SourceFile,
+  onChunk: (rows: Record<string, unknown>[]) => Promise<void>,
+  chunkSize: number = 500
+): Promise<{ totalRows: number; errors: { row: number; message: string }[] }> {
+  try {
+    const workbook = XLSX.read(buffer, {
+      type: "buffer",
+      cellDates: true,
+      cellNF: false,
+      cellText: false,
+    });
+
+    const sheetName = workbook.SheetNames[0];
+    if (!sheetName) {
+      return { totalRows: 0, errors: [{ row: 0, message: "No sheets found" }] };
+    }
+
+    const sheet = workbook.Sheets[sheetName];
+    const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
+      defval: null,
+      raw: false,
+    });
+
+    let totalRows = 0;
+    const errors: { row: number; message: string }[] = [];
+
+    for (let i = 0; i < jsonData.length; i += chunkSize) {
+      const chunk = jsonData.slice(i, i + chunkSize);
+      const normalizedChunk = chunk.map((row, idx) =>
+        normalizeRow(row, source, i + idx + 1)
+      );
+      await onChunk(normalizedChunk);
+      totalRows += normalizedChunk.length;
+    }
+
+    return { totalRows, errors };
+  } catch (error) {
+    return {
+      totalRows: 0,
+      errors: [{ row: 0, message: `Parse error: ${error}` }],
+    };
+  }
+}
+
 function normalizeRow(
   row: Record<string, unknown>,
   source: SourceFile,

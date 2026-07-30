@@ -25,6 +25,11 @@ interface UploadState {
   useCustomMapping: boolean;
 }
 
+interface DuplicateInfo {
+  existingSessionId: string;
+  pendingFiles: File[];
+}
+
 export default function UploadPage() {
   const router = useRouter();
   const [state, setState] = useState<UploadState>({
@@ -37,6 +42,7 @@ export default function UploadPage() {
     useCustomMapping: false,
   });
   const [loadingPreview, setLoadingPreview] = useState(false);
+  const [duplicateInfo, setDuplicateInfo] = useState<DuplicateInfo | null>(null);
 
   const handleFilesSelected = useCallback((newFiles: File[]) => {
     setState((prev) => {
@@ -67,7 +73,6 @@ export default function UploadPage() {
         if (!res.ok) throw new Error("Save mappings failed");
       }
 
-      // Generate preview
       const fileDataPromises = state.files.map(async (file) => ({
         name: file.name,
         data: await file.arrayBuffer().then((buf) =>
@@ -148,12 +153,15 @@ export default function UploadPage() {
     }
   };
 
-  const handleProcess = async () => {
+  const handleProcess = async (forceUpsert = false) => {
     setState((prev) => ({ ...prev, step: "processing", progress: 70 }));
 
     try {
       const formData = new FormData();
       state.files.forEach((file) => formData.append("files", file));
+      if (forceUpsert) {
+        formData.append("forceUpsert", "true");
+      }
 
       const uploadRes = await fetch("/api/upload", {
         method: "POST",
@@ -162,6 +170,14 @@ export default function UploadPage() {
 
       if (!uploadRes.ok) {
         const error = await uploadRes.json();
+        if (uploadRes.status === 409 && error.canUpsert) {
+          setDuplicateInfo({
+            existingSessionId: error.existingSessionId,
+            pendingFiles: state.files,
+          });
+          setState((prev) => ({ ...prev, step: "upload", progress: 0 }));
+          return;
+        }
         throw new Error(error.error || "Upload failed");
       }
 
@@ -174,7 +190,9 @@ export default function UploadPage() {
       }));
 
       toast.success(
-        `Upload ${uploadData.totalRows} baris berhasil! Sedang diproses...`
+        uploadData.isUpsert
+          ? `Data lama diupdate! ${uploadData.totalRows} baris diproses ulang.`
+          : `Upload ${uploadData.totalRows} baris berhasil! Sedang diproses...`
       );
 
       setTimeout(() => {
@@ -189,6 +207,15 @@ export default function UploadPage() {
         progress: 0,
       }));
     }
+  };
+
+  const handleUpsertConfirm = async () => {
+    setDuplicateInfo(null);
+    await handleProcess(true);
+  };
+
+  const handleUpsertCancel = () => {
+    setDuplicateInfo(null);
   };
 
   const steps = state.useCustomMapping
@@ -221,6 +248,35 @@ export default function UploadPage() {
           Upload 3 file sales, lalu proses otomatis
         </p>
       </div>
+
+      {/* Duplicate Confirmation Modal */}
+      {duplicateInfo && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
+          <Card className="max-w-md w-full mx-4">
+            <CardHeader>
+              <h2 className="text-lg font-semibold text-gray-900">
+                File Sudah Ada
+              </h2>
+              <p className="text-sm text-gray-500">
+                File yang diupload sudah diproses sebelumnya (session: {duplicateInfo.existingSessionId.slice(0, 8)}...)
+              </p>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600">
+                Ingin menghapus data lama dan memproses ulang dengan file ini?
+              </p>
+            </CardContent>
+            <CardFooter className="flex justify-end space-x-3">
+              <Button variant="secondary" onClick={handleUpsertCancel}>
+                Batal
+              </Button>
+              <Button onClick={handleUpsertConfirm}>
+                Ya, Proses Ulang
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+      )}
 
       {/* Step Indicator */}
       <Card>
@@ -387,7 +443,6 @@ export default function UploadPage() {
                       </span>
                     </div>
 
-                    {/* Finance Preview */}
                     {p.financeRows.length > 0 && (
                       <div>
                         <h3 className="text-sm font-semibold text-blue-700 mb-2">
@@ -426,7 +481,6 @@ export default function UploadPage() {
                       </div>
                     )}
 
-                    {/* Marketing Preview */}
                     {p.marketingRows.length > 0 && (
                       <div>
                         <h3 className="text-sm font-semibold text-purple-700 mb-2">
@@ -485,7 +539,7 @@ export default function UploadPage() {
               >
                 {state.useCustomMapping ? "← Kembali ke Mapping" : "← Kembali ke Upload"}
               </Button>
-              <Button onClick={handleProcess}>Konfirmasi & Proses →</Button>
+              <Button onClick={() => handleProcess()}>Konfirmasi & Proses →</Button>
             </CardFooter>
           </Card>
         </div>
@@ -555,7 +609,7 @@ export default function UploadPage() {
             </div>
           </div>
           <p className="text-xs text-gray-400 mt-2">
-            Mapping kolom sudah dikonfigurasi di database. Untuk format baru, gunakan &quot;Custom Mapping&quot;.
+            Upload ulang file yang sama? Data lama akan otomatis diganti.
           </p>
         </CardContent>
       </Card>
