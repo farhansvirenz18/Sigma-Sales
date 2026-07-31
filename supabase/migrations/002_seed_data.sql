@@ -2,14 +2,15 @@
 -- SEED DATA: Products, Prices, Mappings, Rules
 -- ============================================
 
--- Products
+-- Products (skip if already exists)
 INSERT INTO products (code, name, category) VALUES
 ('PR01', 'PRODUK SATU', 'Regular'),
 ('BRG01', 'BARANG SATU', 'Regular'),
 ('BDL01', 'BOXL A', 'Bundle'),
-('BDL02', 'BOXL B', 'Bundle');
+('BDL02', 'BOXL B', 'Bundle')
+ON CONFLICT (code) DO NOTHING;
 
--- Product Prices
+-- Product Prices (skip if already exists)
 INSERT INTO product_prices (product_code, platform, hpp) VALUES
 ('PR01', 'WEB', 56000),
 ('PR01', 'SHOPEE', 84000),
@@ -17,7 +18,8 @@ INSERT INTO product_prices (product_code, platform, hpp) VALUES
 ('BRG01', 'WEB', 72000),
 ('BRG01', 'SHOPEE', 85000),
 ('BDL01', 'TIKTOK SHOP', 27000),
-('BDL02', 'TIKTOK SHOP', 22500);
+('BDL02', 'TIKTOK SHOP', 22500)
+ON CONFLICT (product_code, platform, effective_date) DO NOTHING;
 
 -- Column Mappings: SALES_DAILY → FINANCE
 INSERT INTO column_mappings (source_file, source_column, target_table, target_column, transform_rule) VALUES
@@ -34,7 +36,9 @@ INSERT INTO column_mappings (source_file, source_column, target_table, target_co
 ('SALES_DAILY', 'Quantity', 'finance', 'Jumlah', '{"type": "number"}'),
 ('SALES_DAILY', 'Totalperline', 'finance', 'Omzet', '{"type": "number"}'),
 ('SALES_DAILY', 'Note', 'finance', 'TaxName(%)', '{"type": "direct"}'),
-('SALES_DAILY', 'MetodeBayar', 'finance', 'Payment type', '{"type": "map", "mapping": {"TF": "Transfer", "COD": "COD"}}');
+('SALES_DAILY', 'MetodeBayar', 'finance', 'Payment type', '{"type": "direct"}'),
+('SALES_DAILY', 'Admin', 'finance', 'Admin', '{"type": "direct"}')
+ON CONFLICT (source_file, source_column, target_table, target_column) DO NOTHING;
 
 -- Column Mappings: SALES_DAILY → MARKETING
 INSERT INTO column_mappings (source_file, source_column, target_table, target_column, transform_rule) VALUES
@@ -52,7 +56,9 @@ INSERT INTO column_mappings (source_file, source_column, target_table, target_co
 ('SALES_DAILY', 'Quantity', 'marketing', 'Jumlah', '{"type": "number"}'),
 ('SALES_DAILY', 'Totalperline', 'marketing', 'Omzet', '{"type": "number"}'),
 ('SALES_DAILY', 'Note', 'marketing', 'Kode Promo', '{"type": "direct"}'),
-('SALES_DAILY', 'MetodeBayar', 'marketing', 'Metode Pembayaran', '{"type": "direct"}');
+('SALES_DAILY', 'MetodeBayar', 'marketing', 'Metode Pembayaran', '{"type": "direct"}'),
+('SALES_DAILY', 'Admin', 'marketing', 'Admin', '{"type": "direct"}')
+ON CONFLICT (source_file, source_column, target_table, target_column) DO NOTHING;
 
 -- Column Mappings: SALES_MP → FINANCE
 INSERT INTO column_mappings (source_file, source_column, target_table, target_column, transform_rule) VALUES
@@ -68,7 +74,9 @@ INSERT INTO column_mappings (source_file, source_column, target_table, target_co
 ('SALES_MP', 'ProductCode', 'finance', 'Produk Name', '{"type": "lookup", "table": "products", "field": "name"}'),
 ('SALES_MP', 'Quantity', 'finance', 'Jumlah', '{"type": "number"}'),
 ('SALES_MP', 'Totalperline', 'finance', 'Omzet', '{"type": "number"}'),
-('SALES_MP', 'MetodeBayar', 'finance', 'Payment type', '{"type": "map", "mapping": {"TF": "Transfer", "COD": "COD"}}');
+('SALES_MP', 'MetodeBayar', 'finance', 'Payment type', '{"type": "direct"}'),
+('SALES_MP', 'Admin', 'finance', 'Admin', '{"type": "direct"}')
+ON CONFLICT (source_file, source_column, target_table, target_column) DO NOTHING;
 
 -- Column Mappings: SALES_MP → MARKETING
 INSERT INTO column_mappings (source_file, source_column, target_table, target_column, transform_rule) VALUES
@@ -86,7 +94,9 @@ INSERT INTO column_mappings (source_file, source_column, target_table, target_co
 ('SALES_MP', 'Quantity', 'marketing', 'Jumlah', '{"type": "number"}'),
 ('SALES_MP', 'Totalperline', 'marketing', 'Omzet', '{"type": "number"}'),
 ('SALES_MP', 'Note', 'marketing', 'Kode Promo', '{"type": "direct"}'),
-('SALES_MP', 'MetodeBayar', 'marketing', 'Metode Pembayaran', '{"type": "direct"}');
+('SALES_MP', 'MetodeBayar', 'marketing', 'Metode Pembayaran', '{"type": "direct"}'),
+('SALES_MP', 'Admin', 'marketing', 'Admin', '{"type": "direct"}')
+ON CONFLICT (source_file, source_column, target_table, target_column) DO NOTHING;
 
 -- Column Mappings: SALES_PRODUK → FINANCE
 INSERT INTO column_mappings (source_file, source_column, target_table, target_column, transform_rule) VALUES
@@ -102,7 +112,9 @@ INSERT INTO column_mappings (source_file, source_column, target_table, target_co
 ('SALES_PRODUK', 'ProductCode', 'finance', 'Produk Name', '{"type": "lookup", "table": "products", "field": "name"}'),
 ('SALES_PRODUK', 'Quantity', 'finance', 'Jumlah', '{"type": "number"}'),
 ('SALES_PRODUK', 'Totalperline', 'finance', 'Omzet', '{"type": "number"}'),
-('SALES_PRODUK', 'MetodeBayar', 'finance', 'Payment type', '{"type": "map", "mapping": {"TF": "Transfer", "COD": "COD"}}');
+('SALES_PRODUK', 'MetodeBayar', 'finance', 'Payment type', '{"type": "direct"}'),
+('SALES_PRODUK', 'Admin', 'finance', 'Admin', '{"type": "direct"}')
+ON CONFLICT (source_file, source_column, target_table, target_column) DO NOTHING;
 
 -- Column Mappings: SALES_PRODUK → MARKETING
 INSERT INTO column_mappings (source_file, source_column, target_table, target_column, transform_rule) VALUES
@@ -120,7 +132,9 @@ INSERT INTO column_mappings (source_file, source_column, target_table, target_co
 ('SALES_PRODUK', 'Quantity', 'marketing', 'Jumlah', '{"type": "number"}'),
 ('SALES_PRODUK', 'Totalperline', 'marketing', 'Omzet', '{"type": "number"}'),
 ('SALES_PRODUK', 'Note', 'marketing', 'Kode Promo', '{"type": "direct"}'),
-('SALES_PRODUK', 'MetodeBayar', 'marketing', 'Metode Pembayaran', '{"type": "direct"}');
+('SALES_PRODUK', 'MetodeBayar', 'marketing', 'Metode Pembayaran', '{"type": "direct"}'),
+('SALES_PRODUK', 'Admin', 'marketing', 'Admin', '{"type": "direct"}')
+ON CONFLICT (source_file, source_column, target_table, target_column) DO NOTHING;
 
 -- Validation Rules: SALES_DAILY
 INSERT INTO validation_rules (source_file, field_name, rule_type, rule_config, error_message) VALUES
