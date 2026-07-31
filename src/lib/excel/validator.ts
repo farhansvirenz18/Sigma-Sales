@@ -83,11 +83,13 @@ async function applyValidationRule(
   const { rule_type, rule_config, error_message, field_name } = rule;
 
   switch (rule_type) {
-    case "required":
-      if (value === null || value === undefined || value === "") {
+    case "required": {
+      const trimmed = typeof value === "string" ? value.trim() : value;
+      if (trimmed === null || trimmed === undefined || trimmed === "") {
         return { field: field_name, message: error_message, value };
       }
       break;
+    }
 
     case "type":
       if (value !== null && value !== undefined && value !== "") {

@@ -122,9 +122,12 @@ INSERT INTO validation_rules (source_file, field_name, rule_type, rule_config, e
 ('SALES_DAILY', 'Date', 'required', '{"type": "required"}', 'Tanggal wajib diisi'),
 ('SALES_DAILY', 'ProductCode', 'required', '{"type": "required"}', 'Kode produk wajib diisi'),
 ('SALES_DAILY', 'ProductCode', 'lookup', '{"type": "lookup", "table": "products", "field": "code"}', 'Kode produk tidak terdaftar di database'),
+('SALES_DAILY', 'Kanal', 'required', '{"type": "required"}', 'Kanal wajib diisi'),
+('SALES_DAILY', 'Quantity', 'required', '{"type": "required"}', 'Quantity wajib diisi'),
 ('SALES_DAILY', 'Quantity', 'type', '{"type": "type", "data_type": "number"}', 'Quantity harus berupa angka'),
 ('SALES_DAILY', 'Quantity', 'range', '{"type": "range", "min": 1, "max": 9999}', 'Quantity harus antara 1-9999'),
 ('SALES_DAILY', 'UnitPrice', 'type', '{"type": "type", "data_type": "number"}', 'Harga satuan harus berupa angka'),
+('SALES_DAILY', 'Totalperline', 'required', '{"type": "required"}', 'Total per line wajib diisi'),
 ('SALES_DAILY', 'Totalperline', 'type', '{"type": "type", "data_type": "number"}', 'Total per line harus berupa angka');
 
 -- Validation Rules: SALES_MP
@@ -133,7 +136,10 @@ INSERT INTO validation_rules (source_file, field_name, rule_type, rule_config, e
 ('SALES_MP', 'Date', 'required', '{"type": "required"}', 'Tanggal wajib diisi'),
 ('SALES_MP', 'ProductCode', 'required', '{"type": "required"}', 'Kode produk wajib diisi'),
 ('SALES_MP', 'ProductCode', 'lookup', '{"type": "lookup", "table": "products", "field": "code"}', 'Kode produk tidak terdaftar di database'),
+('SALES_MP', 'Kanal', 'required', '{"type": "required"}', 'Kanal wajib diisi'),
+('SALES_MP', 'Quantity', 'required', '{"type": "required"}', 'Quantity wajib diisi'),
 ('SALES_MP', 'Quantity', 'type', '{"type": "type", "data_type": "number"}', 'Quantity harus berupa angka'),
+('SALES_MP', 'Totalperline', 'required', '{"type": "required"}', 'Total per line wajib diisi'),
 ('SALES_MP', 'Totalperline', 'type', '{"type": "type", "data_type": "number"}', 'Total per line harus berupa angka');
 
 -- Validation Rules: SALES_PRODUK
@@ -142,5 +148,8 @@ INSERT INTO validation_rules (source_file, field_name, rule_type, rule_config, e
 ('SALES_PRODUK', 'Date', 'required', '{"type": "required"}', 'Tanggal wajib diisi'),
 ('SALES_PRODUK', 'ProductCode', 'required', '{"type": "required"}', 'Kode produk wajib diisi'),
 ('SALES_PRODUK', 'ProductCode', 'lookup', '{"type": "lookup", "table": "products", "field": "code"}', 'Kode produk tidak terdaftar di database'),
+('SALES_PRODUK', 'Kanal', 'required', '{"type": "required"}', 'Kanal wajib diisi'),
+('SALES_PRODUK', 'Quantity', 'required', '{"type": "required"}', 'Quantity wajib diisi'),
 ('SALES_PRODUK', 'Quantity', 'type', '{"type": "type", "data_type": "number"}', 'Quantity harus berupa angka'),
+('SALES_PRODUK', 'Totalperline', 'required', '{"type": "required"}', 'Total per line wajib diisi'),
 ('SALES_PRODUK', 'Totalperline', 'type', '{"type": "type", "data_type": "number"}', 'Total per line harus berupa angka');
