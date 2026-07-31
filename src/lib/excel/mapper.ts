@@ -267,11 +267,12 @@ export function applyFinanceTransforms(
       financeRow[mapping.target_column] = applyTransform(row.raw_data, mapping, ctx);
     }
 
-    // Auto-compute HPP if not mapped
+    // Auto-compute HPP if not mapped (per-unit × quantity)
     if (!financeRow["HPP Sigma"]) {
       const productCode = String(row.raw_data.ProductCode || row.raw_data.SKU || row.raw_data.product_code || "");
       const platform = resolvePlatform(row.raw_data, ctx);
-      financeRow["HPP Sigma"] = resolveHPP(productCode, platform, ctx);
+      const qty = toNumber(row.raw_data.Quantity || row.raw_data.Qty || row.raw_data.Jumlah || 1);
+      financeRow["HPP Sigma"] = resolveHPP(productCode, platform, ctx) * qty;
     }
 
     // Auto-compute Total Bayar if not mapped
@@ -314,11 +315,12 @@ export function applyMarketingTransforms(
       if (!marketingRow["Bulan"]) marketingRow["Bulan"] = getMonthName(date.getMonth());
     }
 
-    // Auto-compute HPP if not mapped
+    // Auto-compute HPP if not mapped (per-unit × quantity)
     if (!marketingRow["HPP"]) {
       const productCode = String(row.raw_data.ProductCode || row.raw_data.SKU || row.raw_data.product_code || "");
       const platform = resolvePlatform(row.raw_data, ctx);
-      marketingRow["HPP"] = resolveHPP(productCode, platform, ctx);
+      const qty = toNumber(row.raw_data.Quantity || row.raw_data.Qty || row.raw_data.Jumlah || 1);
+      marketingRow["HPP"] = resolveHPP(productCode, platform, ctx) * qty;
     }
 
     // Auto-compute SKU if not mapped

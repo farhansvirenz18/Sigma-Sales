@@ -62,6 +62,7 @@ INSERT INTO column_mappings (source_file, source_column, target_table, target_co
 ('SALES_MP', 'Awb', 'finance', 'No Resi', '{"type": "direct"}'),
 ('SALES_MP', 'Ekspedisi', 'finance', 'Ekspedisi', '{"type": "direct"}'),
 ('SALES_MP', 'TypeTransaksi', 'finance', 'Type Transaksi', '{"type": "direct"}'),
+('SALES_MP', 'TypeTransaksi', 'finance', 'Type Transaksi', '{"type": "direct"}'),
 ('SALES_MP', 'ADV', 'finance', 'Advertiser', '{"type": "direct"}'),
 ('SALES_MP', 'Kanal', 'finance', 'Platform', '{"type": "map", "mapping": {"SHOPEE": "SHOPEE"}}'),
 ('SALES_MP', 'Toko', 'finance', 'Nama Toko', '{"type": "direct"}'),
@@ -82,7 +83,8 @@ INSERT INTO column_mappings (source_file, source_column, target_table, target_co
 ('SALES_MP', 'Toko', 'marketing', 'Nama Toko', '{"type": "direct"}'),
 ('SALES_MP', 'ProductCode', 'marketing', 'Produk', '{"type": "lookup", "table": "products", "field": "name"}'),
 ('SALES_MP', 'Quantity', 'marketing', 'Jumlah', '{"type": "number"}'),
-('SALES_MP', 'Totalperline', 'marketing', 'Omzet', '{"type": "number"}');
+('SALES_MP', 'Totalperline', 'marketing', 'Omzet', '{"type": "number"}'),
+('SALES_MP', 'MetodeBayar', 'marketing', 'Metode Pembayaran', '{"type": "direct"}');
 
 -- Column Mappings: SALES_PRODUK → FINANCE
 INSERT INTO column_mappings (source_file, source_column, target_table, target_column, transform_rule) VALUES
@@ -93,7 +95,7 @@ INSERT INTO column_mappings (source_file, source_column, target_table, target_co
 ('SALES_PRODUK', 'Ekspedisi', 'finance', 'Ekspedisi', '{"type": "direct"}'),
 ('SALES_PRODUK', 'TypeTransaksi', 'finance', 'Type Transaksi', '{"type": "direct"}'),
 ('SALES_PRODUK', 'ADV', 'finance', 'Advertiser', '{"type": "direct"}'),
-('SALES_PRODUK', 'Kanal', 'finance', 'Platform', '{"type": "map", "mapping": {"Tiktok Shop": "TIKTOK SHOP"}}'),
+('SALES_PRODUK', 'Kanal', 'finance', 'Platform', '{"type": "map", "mapping": {"A": "WEB", "Tiktok Shop": "TIKTOK SHOP"}}'),
 ('SALES_PRODUK', 'Toko', 'finance', 'Nama Toko', '{"type": "direct"}'),
 ('SALES_PRODUK', 'ProductCode', 'finance', 'Produk Name', '{"type": "lookup", "table": "products", "field": "name"}'),
 ('SALES_PRODUK', 'Quantity', 'finance', 'Jumlah', '{"type": "number"}'),
@@ -108,7 +110,7 @@ INSERT INTO column_mappings (source_file, source_column, target_table, target_co
 ('SALES_PRODUK', 'Awb', 'marketing', 'No Resi', '{"type": "direct"}'),
 ('SALES_PRODUK', 'Ekspedisi', 'marketing', 'Ekspedisi', '{"type": "direct"}'),
 ('SALES_PRODUK', 'ADV', 'marketing', 'Advertiser', '{"type": "direct"}'),
-('SALES_PRODUK', 'Kanal', 'marketing', 'Platform', '{"type": "map", "mapping": {"Tiktok Shop": "TIKTOK SHOP"}}'),
+('SALES_PRODUK', 'Kanal', 'marketing', 'Platform', '{"type": "map", "mapping": {"A": "WEB", "Tiktok Shop": "TIKTOK SHOP"}}'),
 ('SALES_PRODUK', 'Toko', 'marketing', 'Nama Toko', '{"type": "direct"}'),
 ('SALES_PRODUK', 'ProductCode', 'marketing', 'Produk', '{"type": "lookup", "table": "products", "field": "name"}'),
 ('SALES_PRODUK', 'Quantity', 'marketing', 'Jumlah', '{"type": "number"}'),
