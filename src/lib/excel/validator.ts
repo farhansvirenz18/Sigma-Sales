@@ -3,10 +3,8 @@ import { ValidationError, ValidationRule, SalesRaw } from "@/types";
 
 export async function validateAllRows(
   sessionId: string
-): Promise<{ validCount: number; errorCount: number; newProducts: string[] }> {
+): Promise<{ validCount: number; errorCount: number }> {
   const rules = await loadValidationRules();
-
-  const newProducts = await autoCreateMissingProducts(sessionId);
 
   const { data: rows, error: rowsError } = await supabaseAdmin
     .from("sales_raw")
@@ -19,7 +17,7 @@ export async function validateAllRows(
   }
 
   if (!rows || rows.length === 0) {
-    return { validCount: 0, errorCount: 0, newProducts };
+    return { validCount: 0, errorCount: 0 };
   }
 
   let validCount = 0;
@@ -52,49 +50,7 @@ export async function validateAllRows(
     }
   }
 
-  return { validCount, errorCount, newProducts };
-}
-
-async function autoCreateMissingProducts(sessionId: string): Promise<string[]> {
-  const newProducts: string[] = [];
-
-  const { data: rows } = await supabaseAdmin
-    .from("sales_raw")
-    .select("raw_data")
-    .eq("session_id", sessionId);
-
-  const productCodes = new Set<string>();
-  for (const row of rows || []) {
-    const code = row.raw_data?.ProductCode;
-    if (code && String(code).trim() !== "") {
-      productCodes.add(String(code).trim());
-    }
-  }
-
-  if (productCodes.size === 0) return newProducts;
-
-  const { data: existing } = await supabaseAdmin
-    .from("products")
-    .select("code")
-    .in("code", Array.from(productCodes));
-
-  const existingCodes = new Set((existing || []).map((p) => p.code));
-
-  for (const code of productCodes) {
-    if (!existingCodes.has(code)) {
-      const { error } = await supabaseAdmin
-        .from("products")
-        .insert({ code, name: code, category: "Regular", is_active: true });
-
-      if (!error) {
-        newProducts.push(code);
-      } else {
-        console.error(`Failed to auto-create product ${code}:`, error);
-      }
-    }
-  }
-
-  return newProducts;
+  return { validCount, errorCount };
 }
 
 async function validateSingleRow(

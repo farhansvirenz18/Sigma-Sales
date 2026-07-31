@@ -47,7 +47,6 @@ export const processUpload = inngest.createFunction(
         details: {
           valid: validationResult.validCount,
           errors: validationResult.errorCount,
-          newProducts: validationResult.newProducts,
         },
       });
 
@@ -56,7 +55,6 @@ export const processUpload = inngest.createFunction(
         .update({
           valid_rows: validationResult.validCount,
           error_rows: validationResult.errorCount,
-          new_products: validationResult.newProducts,
         })
         .eq("id", sessionId);
     });
@@ -225,7 +223,6 @@ export const processUpload = inngest.createFunction(
       sessionId,
       financeRows: transformData.financeData.length,
       marketingRows: transformData.marketingData.length,
-      newProducts: validationResult.newProducts,
     };
   }
 );
