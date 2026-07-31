@@ -50,11 +50,12 @@ interface Stats {
 }
 
 function formatCurrency(val: number) {
-  if (val >= 1_000_000_000)
-    return `Rp ${(val / 1_000_000_000).toFixed(1)}M`;
-  if (val >= 1_000_000) return `Rp ${(val / 1_000_000).toFixed(1)}jt`;
-  if (val >= 1_000) return `Rp ${(val / 1_000).toFixed(0)}rb`;
-  return `Rp ${val}`;
+  const v = Number(val) || 0;
+  if (v >= 1_000_000_000)
+    return `Rp ${(v / 1_000_000_000).toFixed(1)}M`;
+  if (v >= 1_000_000) return `Rp ${(v / 1_000_000).toFixed(1)}jt`;
+  if (v >= 1_000) return `Rp ${(v / 1_000).toFixed(0)}rb`;
+  return `Rp ${v.toLocaleString("id-ID")}`;
 }
 
 function formatDate(d: string) {
@@ -198,7 +199,7 @@ export default function DashboardPage() {
             <div>
               <p className="text-xs text-gray-500">Total Omzet</p>
               <p className="text-lg sm:text-xl font-bold text-gray-900">
-                {formatCurrency(stats.revenue.totalOmzet)}
+                {formatCurrency(stats.revenue?.totalOmzet ?? 0)}
               </p>
             </div>
           </div>
