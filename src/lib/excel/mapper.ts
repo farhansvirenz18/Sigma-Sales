@@ -2,6 +2,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { ColumnMapping } from "@/types";
 import { parseDate, toNumber } from "@/lib/utils/date";
 import { getMonthName } from "@/lib/utils/format";
+import dayjs from "dayjs";
 
 interface BundleItem {
   bundle_code: string;
@@ -102,8 +103,23 @@ export function applyTransform(
     case "direct":
       return sourceValue;
 
-    case "date_format":
-      return parseDate(String(sourceValue || ""));
+    case "date_format": {
+      // Handle Date objects from XLSX cellDates
+      let dateVal = sourceValue;
+      if (dateVal instanceof Date) {
+        dateVal = dayjs(dateVal).format("YYYY-MM-DD");
+      } else if (dateVal !== null && dateVal !== undefined && dateVal !== "") {
+        const str = String(dateVal);
+        // Check if stringified Date object (e.g., "Tue Jun 09 2026...")
+        if (/^[A-Z][a-z]{2}\s/.test(str)) {
+          const native = new Date(str);
+          if (!isNaN(native.getTime())) {
+            dateVal = dayjs(native).format("YYYY-MM-DD");
+          }
+        }
+      }
+      return parseDate(String(dateVal || ""));
+    }
 
     case "number":
       return toNumber(sourceValue);

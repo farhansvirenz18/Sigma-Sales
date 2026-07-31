@@ -14,14 +14,24 @@ export function formatDate(
 }
 
 export function parseDate(dateStr: string): string {
+  if (!dateStr) return "";
+
+  const str = String(dateStr);
   const formats = ["YYYY-MM-DD", "DD/MM/YYYY", "MM/DD/YYYY", "DD-MM-YYYY"];
   for (const format of formats) {
-    const parsed = dayjs(dateStr, format, true);
+    const parsed = dayjs(str, format, true);
     if (parsed.isValid()) {
       return parsed.format("YYYY-MM-DD");
     }
   }
-  return dateStr;
+
+  // Fallback: try native Date parsing for stringified Date objects from Excel
+  const native = new Date(str);
+  if (!isNaN(native.getTime())) {
+    return dayjs(native).format("YYYY-MM-DD");
+  }
+
+  return str;
 }
 
 export function toNumber(value: unknown): number {
