@@ -35,10 +35,16 @@ async function checkDuplicate(
 }
 
 async function cleanupOldSession(sessionId: string): Promise<void> {
-  await supabaseAdmin.from("sales_raw").delete().eq("session_id", sessionId);
-  await supabaseAdmin.from("output_files").delete().eq("session_id", sessionId);
-  await supabaseAdmin.from("processing_logs").delete().eq("session_id", sessionId);
-  await supabaseAdmin
+  const { error: err1 } = await supabaseAdmin.from("sales_raw").delete().eq("session_id", sessionId);
+  if (err1) console.error("Cleanup sales_raw error:", err1);
+
+  const { error: err2 } = await supabaseAdmin.from("output_files").delete().eq("session_id", sessionId);
+  if (err2) console.error("Cleanup output_files error:", err2);
+
+  const { error: err3 } = await supabaseAdmin.from("processing_logs").delete().eq("session_id", sessionId);
+  if (err3) console.error("Cleanup processing_logs error:", err3);
+
+  const { error: err4 } = await supabaseAdmin
     .from("upload_sessions")
     .update({
       status: "processing",
@@ -51,6 +57,7 @@ async function cleanupOldSession(sessionId: string): Promise<void> {
       completed_at: null,
     })
     .eq("id", sessionId);
+  if (err4) console.error("Cleanup session reset error:", err4);
 }
 
 export async function POST(request: NextRequest) {

@@ -52,6 +52,13 @@ export async function loadTransformContext(): Promise<TransformContext> {
       supabaseAdmin.from("platform_config").select("*").eq("is_active", true).order("priority", { ascending: false }),
     ]);
 
+  if (productsRes.error) throw new Error(`Failed to load products: ${productsRes.error.message}`);
+  if (pricesRes.error) throw new Error(`Failed to load product_prices: ${pricesRes.error.message}`);
+  if (mappingsRes.error) throw new Error(`Failed to load column_mappings: ${mappingsRes.error.message}`);
+  if (bundlesRes.error) throw new Error(`Failed to load bundle_items: ${bundlesRes.error.message}`);
+  if (regionRes.error) throw new Error(`Failed to load region_config: ${regionRes.error.message}`);
+  if (platformRes.error) throw new Error(`Failed to load platform_config: ${platformRes.error.message}`);
+
   const products = new Map<string, { code: string; name: string }>();
   for (const p of productsRes.data || []) {
     products.set(p.code, p);
@@ -137,6 +144,7 @@ export function applyTransform(
       return evaluateFormula(rule.expression || "", data);
 
     default:
+      console.warn(`Unknown transform type: ${rule.type} for column ${mapping.target_column}`);
       return sourceValue;
   }
 }
@@ -193,7 +201,14 @@ function evaluateFormula(expression: string, data: Record<string, unknown>): num
       const numValue = toNumber(value);
       formula = formula.replace(new RegExp(`\\b${key}\\b`, "g"), String(numValue));
     }
-    const result = new Function(`return ${formula}`)();
+
+    // Safe math evaluator: only allow numbers and basic operators
+    if (!/^[\d\s\+\-\*\/\(\)\.]+$/.test(formula)) {
+      console.warn(`Unsafe formula expression rejected: ${expression}`);
+      return 0;
+    }
+
+    const result = eval(formula);
     return Number(result) || 0;
   } catch {
     return 0;

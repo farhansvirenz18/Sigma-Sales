@@ -56,13 +56,16 @@ export async function POST(
     }
 
     // 3. Delete from output_files table
-    await supabaseAdmin.from("output_files").delete().eq("session_id", id);
+    const { error: delOutputErr } = await supabaseAdmin.from("output_files").delete().eq("session_id", id);
+    if (delOutputErr) console.error("Rollback delete output_files error:", delOutputErr);
 
     // 4. Delete processing logs
-    await supabaseAdmin.from("processing_logs").delete().eq("session_id", id);
+    const { error: delLogsErr } = await supabaseAdmin.from("processing_logs").delete().eq("session_id", id);
+    if (delLogsErr) console.error("Rollback delete processing_logs error:", delLogsErr);
 
     // 5. Delete raw sales data
-    await supabaseAdmin.from("sales_raw").delete().eq("session_id", id);
+    const { error: delRawErr } = await supabaseAdmin.from("sales_raw").delete().eq("session_id", id);
+    if (delRawErr) console.error("Rollback delete sales_raw error:", delRawErr);
 
     // 6. Update session status
     const { error: updateError } = await supabaseAdmin

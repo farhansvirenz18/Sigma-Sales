@@ -6,11 +6,15 @@ export async function validateAllRows(
 ): Promise<{ validCount: number; errorCount: number }> {
   const rules = await loadValidationRules();
 
-  const { data: rows } = await supabaseAdmin
+  const { data: rows, error: rowsError } = await supabaseAdmin
     .from("sales_raw")
     .select("*")
     .eq("session_id", sessionId)
     .eq("validation_status", "pending");
+
+  if (rowsError) {
+    throw new Error(`Failed to fetch rows for validation: ${rowsError.message}`);
+  }
 
   if (!rows || rows.length === 0) {
     return { validCount: 0, errorCount: 0 };
@@ -20,22 +24,28 @@ export async function validateAllRows(
   let errorCount = 0;
 
   for (const row of rows) {
-    const errors = validateSingleRow(row, rules);
+    const errors = await validateSingleRow(row, rules);
 
     if (errors.length === 0) {
-      await supabaseAdmin
+      const { error } = await supabaseAdmin
         .from("sales_raw")
         .update({ validation_status: "valid" })
         .eq("id", row.id);
+      if (error) {
+        console.error(`Failed to update row ${row.id} to valid:`, error);
+      }
       validCount++;
     } else {
-      await supabaseAdmin
+      const { error } = await supabaseAdmin
         .from("sales_raw")
         .update({
           validation_status: "error",
           validation_errors: errors,
         })
         .eq("id", row.id);
+      if (error) {
+        console.error(`Failed to update row ${row.id} to error:`, error);
+      }
       errorCount++;
     }
   }
@@ -43,10 +53,10 @@ export async function validateAllRows(
   return { validCount, errorCount };
 }
 
-function validateSingleRow(
+async function validateSingleRow(
   row: SalesRaw,
   rules: ValidationRule[]
-): ValidationError[] {
+): Promise<ValidationError[]> {
   const errors: ValidationError[] = [];
   const rowRules = rules.filter(
     (r) => r.source_file === row.source_file && r.is_active
@@ -55,7 +65,7 @@ function validateSingleRow(
   for (const rule of rowRules) {
     const value = row.raw_data[rule.field_name];
 
-    const error = applyValidationRule(rule, value, row.raw_data);
+    const error = await applyValidationRule(rule, value, row.raw_data);
     if (error) {
       errors.push(error);
     }
@@ -64,12 +74,12 @@ function validateSingleRow(
   return errors;
 }
 
-function applyValidationRule(
+async function applyValidationRule(
   rule: ValidationRule,
   value: unknown,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  fullRow: Record<string, unknown>
-): ValidationError | null {
+  _fullRow: Record<string, unknown>
+): Promise<ValidationError | null> {
   const { rule_type, rule_config, error_message, field_name } = rule;
 
   switch (rule_type) {
@@ -104,10 +114,26 @@ function applyValidationRule(
       }
       break;
 
-    case "lookup":
-      // Lookup validation is handled by database constraints
-      // This rule type is kept for documentation purposes
+    case "lookup": {
+      if (value === null || value === undefined || value === "") break;
+      const table = rule_config.table as string;
+      const field = rule_config.field as string;
+      if (table && field) {
+        const { data, error } = await supabaseAdmin
+          .from(table)
+          .select(field)
+          .eq(field, value)
+          .limit(1);
+        if (error) {
+          console.error(`Lookup validation error for ${table}.${field}:`, error);
+          break;
+        }
+        if (!data || data.length === 0) {
+          return { field: field_name, message: error_message, value };
+        }
+      }
       break;
+    }
 
     case "range":
       if (value !== null && value !== undefined && value !== "") {
@@ -121,22 +147,25 @@ function applyValidationRule(
       break;
 
     case "unique":
-      // Unique validation is handled by database constraints
-      // This rule type is kept for documentation purposes
+      break;
+
+    default:
+      console.warn(`Unknown validation rule type: ${rule_type} for field ${field_name}`);
       break;
   }
 
   return null;
 }
 
-// Lookup and unique checks would be implemented with actual DB calls in production
-// For now, these are handled by database constraints
-
 async function loadValidationRules(): Promise<ValidationRule[]> {
-  const { data } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from("validation_rules")
     .select("*")
     .eq("is_active", true);
+
+  if (error) {
+    throw new Error(`Failed to load validation rules: ${error.message}`);
+  }
 
   return (data as ValidationRule[]) || [];
 }

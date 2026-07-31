@@ -59,15 +59,48 @@ export const processUpload = inngest.createFunction(
         .eq("id", sessionId);
     });
 
-    if (validationResult.validCount === 0) {
-      await step.run("mark-failed-no-valid-rows", async () => {
+    // V1: Fail if ANY row has validation errors (strict mode)
+    if (validationResult.errorCount > 0) {
+      await step.run("mark-failed-validation-errors", async () => {
+        const { data: errorRows } = await supabaseAdmin
+          .from("sales_raw")
+          .select("source_file, row_number, validation_errors")
+          .eq("session_id", sessionId)
+          .eq("validation_status", "error");
+
+        const errorSummary = (errorRows || []).map((r) => ({
+          file: r.source_file,
+          row: r.row_number,
+          errors: r.validation_errors,
+        }));
+
         await supabaseAdmin
           .from("upload_sessions")
-          .update({ status: "failed", completed_at: new Date().toISOString() })
+          .update({
+            status: "failed",
+            completed_at: new Date().toISOString(),
+            error_summary: errorSummary,
+          })
           .eq("id", sessionId);
+
+        await supabaseAdmin.from("processing_logs").insert({
+          session_id: sessionId,
+          step: "validation",
+          status: "failed",
+          details: {
+            valid: validationResult.validCount,
+            errors: validationResult.errorCount,
+            message: `${validationResult.errorCount} baris gagal validasi`,
+          },
+        });
       });
 
-      return { success: false, reason: "No valid rows to process" };
+      return {
+        success: false,
+        reason: `${validationResult.errorCount} rows failed validation`,
+        validCount: validationResult.validCount,
+        errorCount: validationResult.errorCount,
+      };
     }
 
     await step.run("log-transform-start", async () => {
@@ -93,6 +126,29 @@ export const processUpload = inngest.createFunction(
 
       return { financeData, marketingData };
     });
+
+    // C2: Fail if both outputs are empty
+    if (transformData.financeData.length === 0 && transformData.marketingData.length === 0) {
+      await step.run("mark-failed-empty-output", async () => {
+        await supabaseAdmin
+          .from("upload_sessions")
+          .update({
+            status: "failed",
+            completed_at: new Date().toISOString(),
+            error_summary: [{ message: "Transformasi menghasilkan data kosong" }],
+          })
+          .eq("id", sessionId);
+
+        await supabaseAdmin.from("processing_logs").insert({
+          session_id: sessionId,
+          step: "transform",
+          status: "failed",
+          details: { message: "No data after transform" },
+        });
+      });
+
+      return { success: false, reason: "Transform produced empty output" };
+    }
 
     await step.run("log-transform-complete", async () => {
       await supabaseAdmin.from("processing_logs").insert({

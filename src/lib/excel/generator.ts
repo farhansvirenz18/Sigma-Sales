@@ -40,14 +40,18 @@ export async function generateFinanceExcel(
   const filePath = `${sessionId}/FINANCE_${Date.now()}.xlsx`;
 
   const supabase = supabaseAdmin;
-  await supabase.storage
+  const { error: uploadError } = await supabase.storage
     .from("output-files")
     .upload(filePath, buffer, {
       contentType:
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
 
-  await supabase.from("output_files").insert({
+  if (uploadError) {
+    throw new Error(`Failed to upload FINANCE to storage: ${uploadError.message}`);
+  }
+
+  const { error: insertError } = await supabase.from("output_files").insert({
     session_id: sessionId,
     file_type: "FINANCE",
     file_name: `FINANCE_${new Date().toISOString().split("T")[0]}.xlsx`,
@@ -55,6 +59,10 @@ export async function generateFinanceExcel(
     file_size: buffer.byteLength,
     row_count: data.length,
   });
+
+  if (insertError) {
+    throw new Error(`Failed to insert FINANCE metadata: ${insertError.message}`);
+  }
 
   return filePath;
 }
@@ -101,14 +109,18 @@ export async function generateMarketingExcel(
   const filePath = `${sessionId}/MARKETING_${Date.now()}.xlsx`;
 
   const supabase = supabaseAdmin;
-  await supabase.storage
+  const { error: uploadError } = await supabase.storage
     .from("output-files")
     .upload(filePath, buffer, {
       contentType:
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
 
-  await supabase.from("output_files").insert({
+  if (uploadError) {
+    throw new Error(`Failed to upload MARKETING to storage: ${uploadError.message}`);
+  }
+
+  const { error: insertError } = await supabase.from("output_files").insert({
     session_id: sessionId,
     file_type: "MARKETING",
     file_name: `MARKETING_${new Date().toISOString().split("T")[0]}.xlsx`,
@@ -116,6 +128,10 @@ export async function generateMarketingExcel(
     file_size: buffer.byteLength,
     row_count: data.length,
   });
+
+  if (insertError) {
+    throw new Error(`Failed to insert MARKETING metadata: ${insertError.message}`);
+  }
 
   return filePath;
 }

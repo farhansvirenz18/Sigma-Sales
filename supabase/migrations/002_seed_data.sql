@@ -62,6 +62,7 @@ INSERT INTO column_mappings (source_file, source_column, target_table, target_co
 ('SALES_MP', 'Awb', 'finance', 'No Resi', '{"type": "direct"}'),
 ('SALES_MP', 'Ekspedisi', 'finance', 'Ekspedisi', '{"type": "direct"}'),
 ('SALES_MP', 'TypeTransaksi', 'finance', 'Type Transaksi', '{"type": "direct"}'),
+('SALES_MP', 'ADV', 'finance', 'Advertiser', '{"type": "direct"}'),
 ('SALES_MP', 'Kanal', 'finance', 'Platform', '{"type": "map", "mapping": {"SHOPEE": "SHOPEE"}}'),
 ('SALES_MP', 'Toko', 'finance', 'Nama Toko', '{"type": "direct"}'),
 ('SALES_MP', 'ProductCode', 'finance', 'Produk Name', '{"type": "lookup", "table": "products", "field": "name"}'),
@@ -76,6 +77,7 @@ INSERT INTO column_mappings (source_file, source_column, target_table, target_co
 ('SALES_MP', 'OrderNumber', 'marketing', 'No. Invoice', '{"type": "direct"}'),
 ('SALES_MP', 'Awb', 'marketing', 'No Resi', '{"type": "direct"}'),
 ('SALES_MP', 'Ekspedisi', 'marketing', 'Ekspedisi', '{"type": "direct"}'),
+('SALES_MP', 'ADV', 'marketing', 'Advertiser', '{"type": "direct"}'),
 ('SALES_MP', 'Kanal', 'marketing', 'Platform', '{"type": "map", "mapping": {"SHOPEE": "SHOPEE"}}'),
 ('SALES_MP', 'Toko', 'marketing', 'Nama Toko', '{"type": "direct"}'),
 ('SALES_MP', 'ProductCode', 'marketing', 'Produk', '{"type": "lookup", "table": "products", "field": "name"}'),
@@ -105,6 +107,7 @@ INSERT INTO column_mappings (source_file, source_column, target_table, target_co
 ('SALES_PRODUK', 'OrderNumber', 'marketing', 'No. Invoice', '{"type": "direct"}'),
 ('SALES_PRODUK', 'Awb', 'marketing', 'No Resi', '{"type": "direct"}'),
 ('SALES_PRODUK', 'Ekspedisi', 'marketing', 'Ekspedisi', '{"type": "direct"}'),
+('SALES_PRODUK', 'ADV', 'marketing', 'Advertiser', '{"type": "direct"}'),
 ('SALES_PRODUK', 'Kanal', 'marketing', 'Platform', '{"type": "map", "mapping": {"Tiktok Shop": "TIKTOK SHOP"}}'),
 ('SALES_PRODUK', 'Toko', 'marketing', 'Nama Toko', '{"type": "direct"}'),
 ('SALES_PRODUK', 'ProductCode', 'marketing', 'Produk', '{"type": "lookup", "table": "products", "field": "name"}'),
@@ -116,6 +119,7 @@ INSERT INTO validation_rules (source_file, field_name, rule_type, rule_config, e
 ('SALES_DAILY', 'OrderNumber', 'required', '{"type": "required"}', 'Order number wajib diisi'),
 ('SALES_DAILY', 'Date', 'required', '{"type": "required"}', 'Tanggal wajib diisi'),
 ('SALES_DAILY', 'ProductCode', 'required', '{"type": "required"}', 'Kode produk wajib diisi'),
+('SALES_DAILY', 'ProductCode', 'lookup', '{"type": "lookup", "table": "products", "field": "code"}', 'Kode produk tidak terdaftar di database'),
 ('SALES_DAILY', 'Quantity', 'type', '{"type": "type", "data_type": "number"}', 'Quantity harus berupa angka'),
 ('SALES_DAILY', 'Quantity', 'range', '{"type": "range", "min": 1, "max": 9999}', 'Quantity harus antara 1-9999'),
 ('SALES_DAILY', 'UnitPrice', 'type', '{"type": "type", "data_type": "number"}', 'Harga satuan harus berupa angka'),
@@ -126,6 +130,7 @@ INSERT INTO validation_rules (source_file, field_name, rule_type, rule_config, e
 ('SALES_MP', 'OrderNumber', 'required', '{"type": "required"}', 'Order number wajib diisi'),
 ('SALES_MP', 'Date', 'required', '{"type": "required"}', 'Tanggal wajib diisi'),
 ('SALES_MP', 'ProductCode', 'required', '{"type": "required"}', 'Kode produk wajib diisi'),
+('SALES_MP', 'ProductCode', 'lookup', '{"type": "lookup", "table": "products", "field": "code"}', 'Kode produk tidak terdaftar di database'),
 ('SALES_MP', 'Quantity', 'type', '{"type": "type", "data_type": "number"}', 'Quantity harus berupa angka'),
 ('SALES_MP', 'Totalperline', 'type', '{"type": "type", "data_type": "number"}', 'Total per line harus berupa angka');
 
@@ -134,5 +139,6 @@ INSERT INTO validation_rules (source_file, field_name, rule_type, rule_config, e
 ('SALES_PRODUK', 'OrderNumber', 'required', '{"type": "required"}', 'Order number wajib diisi'),
 ('SALES_PRODUK', 'Date', 'required', '{"type": "required"}', 'Tanggal wajib diisi'),
 ('SALES_PRODUK', 'ProductCode', 'required', '{"type": "required"}', 'Kode produk wajib diisi'),
+('SALES_PRODUK', 'ProductCode', 'lookup', '{"type": "lookup", "table": "products", "field": "code"}', 'Kode produk tidak terdaftar di database'),
 ('SALES_PRODUK', 'Quantity', 'type', '{"type": "type", "data_type": "number"}', 'Quantity harus berupa angka'),
 ('SALES_PRODUK', 'Totalperline', 'type', '{"type": "type", "data_type": "number"}', 'Total per line harus berupa angka');

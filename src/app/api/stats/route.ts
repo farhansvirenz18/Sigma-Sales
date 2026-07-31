@@ -13,7 +13,6 @@ export async function GET() {
       rolledBackRes,
       recentRes,
       platformRes,
-      revenueRes,
     ] = await Promise.all([
       supabaseAdmin
         .from("upload_sessions")
@@ -39,7 +38,6 @@ export async function GET() {
         .order("created_at", { ascending: false })
         .limit(5),
       supabaseAdmin.from("sales_raw").select("source_file"),
-      supabaseAdmin.from("sales_raw").select("raw_data"),
     ]);
 
     const totalSessions = sessionsRes.count || 0;
@@ -66,13 +64,23 @@ export async function GET() {
       platformCounts[src] = (platformCounts[src] || 0) + 1;
     }
 
-    // Revenue estimate from raw_data
-    let totalOmzet = 0;
-    for (const row of revenueRes.data || []) {
-      const rd = row.raw_data as Record<string, unknown>;
-      const omzet = Number(rd.Totalperline || 0);
-      totalOmzet += omzet;
-    }
+    // Revenue: fetch only completed sessions' output_files for HPP
+    const { data: outputFiles } = await supabaseAdmin
+      .from("output_files")
+      .select("row_count, file_type")
+      .in("session_id", (await supabaseAdmin
+        .from("upload_sessions")
+        .select("id")
+        .eq("status", "completed")
+      ).data?.map((s: { id: string }) => s.id) || []);
+
+    // Estimate total rows from output files
+    const totalFinanceRows = (outputFiles || [])
+      .filter((f) => f.file_type === "FINANCE")
+      .reduce((sum, f) => sum + (f.row_count || 0), 0);
+    const totalMarketingRows = (outputFiles || [])
+      .filter((f) => f.file_type === "MARKETING")
+      .reduce((sum, f) => sum + (f.row_count || 0), 0);
 
     const monthlyData = await calculateMonthlyStats();
 
@@ -95,9 +103,8 @@ export async function GET() {
         { name: "Menunggu", value: pendingSessions > 0 ? pendingSessions : 0, color: "#f59e0b" },
       ],
       revenue: {
-        totalOmzet,
-        totalHPP: 0,
-        profit: totalOmzet,
+        totalFinanceRows,
+        totalMarketingRows,
       },
     });
   } catch (error) {
