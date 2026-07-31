@@ -36,8 +36,7 @@ INSERT INTO column_mappings (source_file, source_column, target_table, target_co
 ('SALES_DAILY', 'Quantity', 'finance', 'Jumlah', '{"type": "number"}'),
 ('SALES_DAILY', 'Totalperline', 'finance', 'Omzet', '{"type": "number"}'),
 ('SALES_DAILY', 'Note', 'finance', 'TaxName(%)', '{"type": "direct"}'),
-('SALES_DAILY', 'MetodeBayar', 'finance', 'Payment type', '{"type": "direct"}'),
-('SALES_DAILY', 'Admin', 'finance', 'Admin', '{"type": "direct"}')
+('SALES_DAILY', 'MetodeBayar', 'finance', 'Payment type', '{"type": "direct"}')
 ON CONFLICT (source_file, source_column, target_table, target_column) DO NOTHING;
 
 -- Column Mappings: SALES_DAILY → MARKETING
@@ -56,8 +55,7 @@ INSERT INTO column_mappings (source_file, source_column, target_table, target_co
 ('SALES_DAILY', 'Quantity', 'marketing', 'Jumlah', '{"type": "number"}'),
 ('SALES_DAILY', 'Totalperline', 'marketing', 'Omzet', '{"type": "number"}'),
 ('SALES_DAILY', 'Note', 'marketing', 'Kode Promo', '{"type": "direct"}'),
-('SALES_DAILY', 'MetodeBayar', 'marketing', 'Metode Pembayaran', '{"type": "direct"}'),
-('SALES_DAILY', 'Admin', 'marketing', 'Admin', '{"type": "direct"}')
+('SALES_DAILY', 'MetodeBayar', 'marketing', 'Metode Pembayaran', '{"type": "direct"}')
 ON CONFLICT (source_file, source_column, target_table, target_column) DO NOTHING;
 
 -- Column Mappings: SALES_MP → FINANCE
@@ -74,8 +72,7 @@ INSERT INTO column_mappings (source_file, source_column, target_table, target_co
 ('SALES_MP', 'ProductCode', 'finance', 'Produk Name', '{"type": "lookup", "table": "products", "field": "name"}'),
 ('SALES_MP', 'Quantity', 'finance', 'Jumlah', '{"type": "number"}'),
 ('SALES_MP', 'Totalperline', 'finance', 'Omzet', '{"type": "number"}'),
-('SALES_MP', 'MetodeBayar', 'finance', 'Payment type', '{"type": "direct"}'),
-('SALES_MP', 'Admin', 'finance', 'Admin', '{"type": "direct"}')
+('SALES_MP', 'MetodeBayar', 'finance', 'Payment type', '{"type": "direct"}')
 ON CONFLICT (source_file, source_column, target_table, target_column) DO NOTHING;
 
 -- Column Mappings: SALES_MP → MARKETING
@@ -94,8 +91,7 @@ INSERT INTO column_mappings (source_file, source_column, target_table, target_co
 ('SALES_MP', 'Quantity', 'marketing', 'Jumlah', '{"type": "number"}'),
 ('SALES_MP', 'Totalperline', 'marketing', 'Omzet', '{"type": "number"}'),
 ('SALES_MP', 'Note', 'marketing', 'Kode Promo', '{"type": "direct"}'),
-('SALES_MP', 'MetodeBayar', 'marketing', 'Metode Pembayaran', '{"type": "direct"}'),
-('SALES_MP', 'Admin', 'marketing', 'Admin', '{"type": "direct"}')
+('SALES_MP', 'MetodeBayar', 'marketing', 'Metode Pembayaran', '{"type": "direct"}')
 ON CONFLICT (source_file, source_column, target_table, target_column) DO NOTHING;
 
 -- Column Mappings: SALES_PRODUK → FINANCE
@@ -112,8 +108,7 @@ INSERT INTO column_mappings (source_file, source_column, target_table, target_co
 ('SALES_PRODUK', 'ProductCode', 'finance', 'Produk Name', '{"type": "lookup", "table": "products", "field": "name"}'),
 ('SALES_PRODUK', 'Quantity', 'finance', 'Jumlah', '{"type": "number"}'),
 ('SALES_PRODUK', 'Totalperline', 'finance', 'Omzet', '{"type": "number"}'),
-('SALES_PRODUK', 'MetodeBayar', 'finance', 'Payment type', '{"type": "direct"}'),
-('SALES_PRODUK', 'Admin', 'finance', 'Admin', '{"type": "direct"}')
+('SALES_PRODUK', 'MetodeBayar', 'finance', 'Payment type', '{"type": "direct"}')
 ON CONFLICT (source_file, source_column, target_table, target_column) DO NOTHING;
 
 -- Column Mappings: SALES_PRODUK → MARKETING
@@ -132,8 +127,7 @@ INSERT INTO column_mappings (source_file, source_column, target_table, target_co
 ('SALES_PRODUK', 'Quantity', 'marketing', 'Jumlah', '{"type": "number"}'),
 ('SALES_PRODUK', 'Totalperline', 'marketing', 'Omzet', '{"type": "number"}'),
 ('SALES_PRODUK', 'Note', 'marketing', 'Kode Promo', '{"type": "direct"}'),
-('SALES_PRODUK', 'MetodeBayar', 'marketing', 'Metode Pembayaran', '{"type": "direct"}'),
-('SALES_PRODUK', 'Admin', 'marketing', 'Admin', '{"type": "direct"}')
+('SALES_PRODUK', 'MetodeBayar', 'marketing', 'Metode Pembayaran', '{"type": "direct"}')
 ON CONFLICT (source_file, source_column, target_table, target_column) DO NOTHING;
 
 -- Validation Rules: SALES_DAILY

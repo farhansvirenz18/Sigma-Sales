@@ -162,7 +162,6 @@ export interface FinanceRow {
   Advertiser: string;
   Platform: string;
   "Nama Toko": string;
-  Admin: string;
   "Produk Name": string;
   Jumlah: number;
   Omzet: number;
@@ -185,7 +184,6 @@ export interface MarketingRow {
   Advertiser: string;
   Platform: string;
   "Nama Toko": string;
-  Admin: string;
   Produk: string;
   Jumlah: number;
   Omzet: number;
